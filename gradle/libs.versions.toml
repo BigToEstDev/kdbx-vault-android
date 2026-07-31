@@ -7,12 +7,12 @@ gradle = "9.2.1"
 junit = "4.13.2"
 junitVersion = "1.1.5"
 espressoCore = "3.7.0"
-kotlinGradlePlugin = "2.2.10"
+kotlinGradlePlugin = "2.3.20"
 lifecycleRuntimeKtx = "2.11.0"
 activityCompose = "1.13.0"
-kotlin = "2.2.10"
+kotlin = "2.3.20"
 composeBom = "2026.02.01"
-ksp = "2.2.10-2.0.2"
+ksp = "2.3.7"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
