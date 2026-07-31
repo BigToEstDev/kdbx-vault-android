@@ -1,4 +1,11 @@
+@file:Suppress("UnstableApiUsage")
+
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+rootProject.name = "pass-app"
+
 pluginManagement {
+    includeBuild("tools")
     repositories {
         google {
             content {
@@ -22,6 +29,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "pass-app"
 include(":app")
+include(":utils:utils-domain")
  

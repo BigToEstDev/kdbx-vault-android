@@ -1,16 +1,23 @@
 [versions]
 agp = "9.2.1"
+androidx-hilt = "1.3.0"
 coreKtx = "1.19.0"
+com-google-dagger = "2.60"
+gradle = "9.2.1"
 junit = "4.13.2"
 junitVersion = "1.1.5"
 espressoCore = "3.7.0"
+kotlinGradlePlugin = "2.2.10"
 lifecycleRuntimeKtx = "2.11.0"
 activityCompose = "1.13.0"
 kotlin = "2.2.10"
 composeBom = "2026.02.01"
+ksp = "2.2.10-2.0.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+android-gradle = { module = "com.android.tools.build:gradle", version.ref = "gradle" }
+android-gradle-api = { module = "com.android.tools.build:gradle-api", version.ref = "gradle" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -25,7 +32,26 @@ androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 
+kotlin-compose-gradle-plugin = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
+ksp-gradle-plugin = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
+
+hilt = { module = "com.google.dagger:hilt-android", version.ref = "com-google-dagger" }
+hilt-common = { module = "androidx.hilt:hilt-common", version.ref = "androidx-hilt" }
+hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "com-google-dagger" }
+hilt-ext-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "androidx-hilt" }
+hilt-gradle = { module = "com.google.dagger:hilt-android-gradle-plugin", version.ref = "com-google-dagger" }
+hilt-lifecycle-viewmodel = { module = "androidx.hilt:hilt-lifecycle-viewmodel", version.ref = "androidx-hilt" }
+hilt-navigation = { module = "androidx.hilt:hilt-navigation", version.ref = "androidx-hilt" }
+hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "androidx-hilt" }
+hilt-navigation-compose-samples = "androidx.hilt:hilt-navigation-compose-samples:1.0.0-alpha03"
+hilt-navigation-fragment = { module = "androidx.hilt:hilt-navigation-fragment", version.ref = "androidx-hilt" }
+hilt-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "com-google-dagger" }
+hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "androidx-hilt" }
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinGradlePlugin" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+
 
