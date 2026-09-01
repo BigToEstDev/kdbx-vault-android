@@ -30,5 +30,6 @@ dependencyResolutionManagement {
 }
 
 include(":app")
-include(":utils:utils-domain")
- 
+include(":core:core-domain")
+include(":core:core-pres")
+include(":core:core-data")
