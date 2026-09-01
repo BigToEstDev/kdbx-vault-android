@@ -1,5 +1,6 @@
 plugins {
     id("android-compose-app")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -26,6 +27,7 @@ android {
 dependencies {
     implementation(libs.hilt)
     ksp(libs.hilt.compiler)
+    compileOnly(libs.errorprone.annotations)
 
     implementation(projects.core.coreDomain)
     implementation(projects.core.corePres)

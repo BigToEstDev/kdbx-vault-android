@@ -15,12 +15,17 @@ dependencies {
     implementation(libs.hilt)
     ksp(libs.hilt.compiler)
     api(libs.hilt.navigation.compose)
+    api(libs.hilt.lifecycle.viewmodel.compose)
 
     api(libs.kotlinx.coroutines.core)
     api(libs.kotlinx.coroutines.android)
     api(libs.androidx.lifecycle.viewmodel.ktx)
     api(libs.androidx.lifecycle.viewmodel.compose)
     api(libs.androidx.lifecycle.runtime.compose)
+
+    api(libs.orbit.core)
+    api(libs.orbit.viewmodel)
+    api(libs.orbit.compose)
 
     api(libs.androidx.compose.ui)
     api(libs.androidx.compose.ui.graphics)
