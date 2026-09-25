@@ -18,6 +18,5 @@ build/
 .cxx
 local.properties
 
-# Rust bridge (pass-ffi): build artifacts and the .so copied into the app
+# Rust bridge (pass-ffi): cargo artifacts. The .so lands in app/build/rustJniLibs, already ignored
 /rust/*/target/
-/app/src/main/jniLibs/

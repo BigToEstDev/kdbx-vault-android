@@ -1,5 +1,7 @@
 plugins {
     id("android-compose-app")
+    // Builds rust/pass-ffi with cargo-ndk and puts the .so into src/main/jniLibs
+    id("rust-bridge")
     alias(libs.plugins.kotlin.serialization)
 }
 
