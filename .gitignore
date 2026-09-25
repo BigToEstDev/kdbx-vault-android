@@ -17,3 +17,7 @@ build/
 .externalNativeBuild
 .cxx
 local.properties
+
+# Rust bridge (pass-ffi): build artifacts and the .so copied into the app
+/rust/*/target/
+/app/src/main/jniLibs/
