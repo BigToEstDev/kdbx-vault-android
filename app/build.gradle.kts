@@ -33,4 +33,6 @@ dependencies {
 
     implementation(projects.core.coreDomain)
     implementation(projects.core.corePres)
+    // The native core: its Hilt module binds NativeCore to the jni implementation
+    implementation(projects.core.coreData)
 }

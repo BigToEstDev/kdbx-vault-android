@@ -13,7 +13,7 @@
 //! - a panic becomes a Java exception rather than a dead process. Ordinary failures are not exceptions:
 //!   they come back inside the json envelope, see `errors`.
 //!
-//! The function names carry the Kotlin package (`ru.kino.dev.core.data.ffi.PassFfi`); renaming that
+//! The function names carry the Kotlin package (`ru.kino.dev.ffi.PassFfi`); renaming that
 //! package means renaming these functions. The package must not contain underscores, because jni
 //! encodes `_` in a name as `_1`.
 
@@ -31,7 +31,7 @@ mod key_store;
 /// Version of this crate plus the time it was built, so a stale `.so` is visible in the log instead of
 /// being debugged for an hour. Logged by the app on start.
 #[no_mangle]
-pub extern "system" fn Java_ru_kino_dev_core_data_ffi_PassFfi_buildInfo<'local>(
+pub extern "system" fn Java_ru_kino_dev_ffi_PassFfi_buildInfo<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass<'local>,
 ) -> jstring {
@@ -49,7 +49,7 @@ pub extern "system" fn Java_ru_kino_dev_core_data_ffi_PassFfi_buildInfo<'local>(
 /// Runs one command of the core. `argsJson` is a json object of arguments, the answer is the envelope
 /// described in `errors`.
 #[no_mangle]
-pub extern "system" fn Java_ru_kino_dev_core_data_ffi_PassFfi_invoke<'local>(
+pub extern "system" fn Java_ru_kino_dev_ffi_PassFfi_invoke<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass<'local>,
     command: JString<'local>,

@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">pass-app</string>
+
+    <!-- Step 22: the end to end check of the native bridge. Replaced by real screens later -->
+    <string name="home_greeting">Hello, it\'s your password app!</string>
+    <string name="home_clicks">Clicks: %1$d</string>
+    <string name="home_click_me">Click me</string>
+    <string name="home_native_build_info">Native: %1$s</string>
+    <string name="home_native_loading">Native: loading…</string>
+    <string name="home_generated_password">Password: %1$s</string>
+    <string name="home_native_error">Error: %1$s</string>
+    <string name="home_generate_password">Generate password</string>
+    <string name="home_provoke_error">Ask for an invalid one</string>
+    <string name="home_native_busy">Working…</string>
 </resources>
