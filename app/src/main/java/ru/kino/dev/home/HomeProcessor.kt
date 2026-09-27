@@ -37,6 +37,12 @@ class HomeProcessor @Inject constructor(
      */
     fun onProvokeCoreError() = nativeCall { generatePassword(PasswordOptions(length = 0)) }
 
+    /**
+     * Calls a command the bridge does not have. The other half of the failure path: a refusal by the
+     * bridge rather than by the core, and it has to reach the screen the same way.
+     */
+    fun onProvokeBridgeError() = nativeCall { probeUnknownCommand() }
+
     private fun loadBuildInfo() = intent {
         val info = runCatching { nativeCore.buildInfo() }
         reduce {

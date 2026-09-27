@@ -3,6 +3,7 @@ package ru.kino.dev.ffi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonElement
 import ru.kino.dev.core.NativeCore
 import ru.kino.dev.core.PasswordOptions
 import javax.inject.Inject
@@ -35,6 +36,13 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
         FfiEnvelope.unwrap(envelope, GeneratedPasswordDto.serializer()).password
     }
 
+    override suspend fun probeUnknownCommand(): String = withContext(dispatcher) {
+        val envelope = PassFfi.invoke(COMMAND_UNKNOWN, NO_ARGUMENTS.toString())
+        // The unwrap throws before it looks at the payload, so what the payload is declared as does not
+        // matter; a plain JsonElement says that nothing is expected to come back
+        FfiEnvelope.unwrap(envelope, JsonElement.serializer()).toString()
+    }
+
     private fun PasswordOptions.toDto() = PasswordOptionsDto(
         length = length,
         numbers = numbers,
@@ -48,5 +56,8 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
 
     private companion object {
         const val COMMAND_GENERATE_PASSWORD = "generate_password"
+
+        // Deliberately not a command: the dispatcher answers it with the UnknownCommand kind
+        const val COMMAND_UNKNOWN = "no_such_command"
     }
 }

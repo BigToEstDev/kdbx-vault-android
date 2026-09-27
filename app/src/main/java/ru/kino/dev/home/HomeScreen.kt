@@ -74,6 +74,13 @@ fun HomeScreen(processor: HomeProcessor = hiltViewModel()) {
             ) {
                 Text(text = stringResource(R.string.home_provoke_error))
             }
+
+            Button(
+                onClick = { processor.onProvokeBridgeError() },
+                enabled = !state.isNativeBusy,
+            ) {
+                Text(text = stringResource(R.string.home_provoke_unknown_command))
+            }
         }
     }
 }

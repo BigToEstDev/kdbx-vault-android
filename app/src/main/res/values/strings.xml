@@ -10,6 +10,7 @@
     <string name="home_generated_password">Password: %1$s</string>
     <string name="home_native_error">Error: %1$s</string>
     <string name="home_generate_password">Generate password</string>
-    <string name="home_provoke_error">Ask for an invalid one</string>
+    <string name="home_provoke_error">Ask the core for an invalid password</string>
+    <string name="home_provoke_unknown_command">Call a command that does not exist</string>
     <string name="home_native_busy">Working…</string>
 </resources>
