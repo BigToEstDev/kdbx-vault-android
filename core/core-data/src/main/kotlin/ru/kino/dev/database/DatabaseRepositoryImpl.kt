@@ -7,6 +7,8 @@ import ru.kino.dev.core.DatabaseRepository
 import ru.kino.dev.core.NativeCore
 import ru.kino.dev.core.NewDatabase
 import ru.kino.dev.core.OpenedDatabase
+import ru.kino.dev.core.RecentDatabase
+import ru.kino.dev.core.RecentDatabases
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -21,6 +23,7 @@ import javax.inject.Singleton
 internal class DatabaseRepositoryImpl @Inject constructor(
     private val core: NativeCore,
     private val files: DatabaseFiles,
+    private val recent: RecentDatabases,
 ) : DatabaseRepository {
 
     override suspend fun create(
@@ -49,6 +52,7 @@ internal class DatabaseRepositoryImpl @Inject constructor(
             throw e
         }
 
+        recent.remember(created.database.asRecent(uri))
         return created.database
     }
 
@@ -57,12 +61,17 @@ internal class DatabaseRepositoryImpl @Inject constructor(
         val fileName = files.displayName(uri)
         val bytes = files.read(uri)
 
-        return core.openDatabase(
+        val opened = core.openDatabase(
             dbKey = uri,
             bytes = bytes,
             password = password,
             fileName = fileName,
         )
+
+        // Only a database that actually opened is remembered: an entry for a file with a forgotten password
+        // would be an invitation to fail again
+        recent.remember(opened.asRecent(uri))
+        return opened
     }
 
     override suspend fun save(dbKey: String) {
@@ -73,6 +82,15 @@ internal class DatabaseRepositoryImpl @Inject constructor(
     override suspend fun close(dbKey: String) {
         core.closeDatabase(dbKey)
     }
+
+    private suspend fun OpenedDatabase.asRecent(uri: String) = RecentDatabase(
+        uri = uri,
+        // The name the app resolved, not the one the core derives from the uri - see the note about
+        // file_name in NativeCore
+        fileName = files.displayName(uri),
+        databaseName = databaseName,
+        openedAt = System.currentTimeMillis(),
+    )
 
     // Cancelling the coroutine while the bytes are on their way to the file would leave a truncated
     // database, and the user cancelled a screen, not their data

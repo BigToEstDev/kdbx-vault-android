@@ -25,6 +25,7 @@
     <string name="database_check_database">Database: %1$s</string>
     <string name="database_check_file">File: %1$s</string>
     <string name="database_check_error">Error: %1$s</string>
+    <string name="database_check_recent">Opened before</string>
     <string name="database_check_log">What happened</string>
     <string name="home_open_database_check">Check a real database</string>
 </resources>

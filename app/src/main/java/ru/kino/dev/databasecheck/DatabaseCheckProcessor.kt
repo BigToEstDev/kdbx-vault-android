@@ -8,6 +8,7 @@ import ru.kino.dev.core.CoreException
 import ru.kino.dev.core.DatabaseFileException
 import ru.kino.dev.core.DatabaseRepository
 import ru.kino.dev.core.OpenedDatabase
+import ru.kino.dev.core.RecentDatabases
 import javax.inject.Inject
 
 /**
@@ -20,11 +21,20 @@ import javax.inject.Inject
 @HiltViewModel
 class DatabaseCheckProcessor @Inject constructor(
     private val databases: DatabaseRepository,
+    private val recent: RecentDatabases,
 ) :
     ViewModel(),
     OrbitContainerHost<DatabaseCheckState, DatabaseCheckState, Nothing> {
 
-    override val container = orbitContainer<DatabaseCheckState, Nothing>(DatabaseCheckState())
+    override val container = orbitContainer<DatabaseCheckState, Nothing>(DatabaseCheckState()) {
+        observeRecent()
+    }
+
+    private fun observeRecent() = intent {
+        recent.all.collect { remembered ->
+            reduce { state.copy(recent = remembered) }
+        }
+    }
 
     /** A document was just created by the picker: make a database in it. */
     fun onFileCreated(uri: String) = intent {
@@ -46,11 +56,22 @@ class DatabaseCheckProcessor @Inject constructor(
         }
     }
 
-    /** A document was picked: open the database in it. */
+    /**
+     * A document was picked, or a remembered one was tapped: open the database in it.
+     *
+     * The same path for both on purpose - a remembered uri is an ordinary uri, and if the access to it did
+     * not survive the restart, that failure is exactly what this screen is here to show.
+     */
     fun onFilePicked(uri: String) = intent {
-        begin("opening the chosen file")
+        begin("opening $uri")
 
         val outcome = runCatching { databases.open(uri = uri, password = state.password) }
+
+        // A file that cannot be read any more has no business staying in the list: the document was deleted,
+        // the card removed, the provider uninstalled
+        outcome.exceptionOrNull()
+            ?.takeIf { it is DatabaseFileException }
+            ?.let { recent.forget(uri) }
 
         reduce {
             outcome.fold(

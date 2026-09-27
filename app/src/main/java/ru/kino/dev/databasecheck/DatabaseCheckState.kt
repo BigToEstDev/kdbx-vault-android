@@ -1,5 +1,7 @@
 package ru.kino.dev.databasecheck
 
+import ru.kino.dev.core.RecentDatabase
+
 /**
  * What the check screen shows.
  *
@@ -10,6 +12,9 @@ package ru.kino.dev.databasecheck
 data class DatabaseCheckState(
     /** Uri of the document the user picked, or null while nothing is picked */
     val uri: String? = null,
+    /** Databases opened before: tapping one opens it without the picker, which is the real test of the
+     * permissions surviving a restart */
+    val recent: List<RecentDatabase> = emptyList(),
     /** Name of the open database as the core reports it */
     val databaseName: String? = null,
     /** File name the app passed in and got back */

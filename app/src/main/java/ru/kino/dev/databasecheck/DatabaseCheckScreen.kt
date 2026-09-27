@@ -15,6 +15,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -124,6 +125,27 @@ fun DatabaseCheckScreen(processor: DatabaseCheckProcessor = hiltViewModel()) {
                 text = stringResource(R.string.database_check_error, error),
                 color = MaterialTheme.colorScheme.error,
             )
+        }
+
+        if (state.recent.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.database_check_recent),
+                style = MaterialTheme.typography.labelLarge,
+            )
+            state.recent.forEach { remembered ->
+                // Opening from here goes through the stored uri and no picker, which is what proves the
+                // access survived the process
+                TextButton(
+                    onClick = { processor.onFilePicked(remembered.uri) },
+                    enabled = !state.isBusy,
+                ) {
+                    Text(
+                        text = remembered.fileName
+                            ?: remembered.databaseName
+                            ?: remembered.uri,
+                    )
+                }
+            }
         }
 
         if (state.log.isNotEmpty()) {
