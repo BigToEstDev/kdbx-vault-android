@@ -1,3 +1,7 @@
 [
-  "generate_password"
+  "close_kdbx",
+  "create_and_write_to_writer",
+  "generate_password",
+  "read_kdbx",
+  "save_kdbx_to_writer"
 ]

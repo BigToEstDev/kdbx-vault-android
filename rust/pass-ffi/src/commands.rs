@@ -45,6 +45,13 @@ macro_rules! commands {
 // Commands are added here together with their branch in `dispatch`, never ahead of it: a name that
 // answers nothing is worse than a missing name, because Kotlin cannot tell it from a working one.
 commands! {
+    // The life cycle of a database file. The names are the core's own method names, so a command can be
+    // traced to the function it calls without a table in between
+    CreateAndWriteToWriter => "create_and_write_to_writer",
+    ReadKdbx => "read_kdbx",
+    SaveKdbxToWriter => "save_kdbx_to_writer",
+    CloseKdbx => "close_kdbx",
+
     GeneratePassword => "generate_password",
 }
 
