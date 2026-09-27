@@ -12,28 +12,74 @@ use serde::de::DeserializeOwned;
 
 use kdbx_rust_core::db_service::PasswordGenerationOptions;
 
+use crate::commands::Command;
 use crate::errors::{err_envelope, ok_envelope, ErrorPayload};
+
+/// What a command answers: the envelope always, and raw bytes when the command produces a file - the
+/// bytes of a database on save. Kept apart from the envelope on purpose, so a database never has to be
+/// base64'd into json.
+pub(crate) struct Answer {
+    pub(crate) envelope: String,
+    pub(crate) payload: Option<Vec<u8>>,
+}
 
 /// Runs one command and returns the json envelope. Never panics on bad input: unknown commands and
 /// unparseable arguments come back as `err`.
 pub(crate) fn run(command: &str, args_json: &str) -> String {
-    match dispatch(command, args_json) {
-        Ok(json) => json,
-        Err(payload) => err_envelope(&payload),
+    run_with_bytes(command, args_json, None).envelope
+}
+
+/// The same, for the binary boundary: arguments may carry secrets and the command may be handed the
+/// bytes of a database. Commands that take no bytes reject them rather than ignore them - a caller that
+/// sends bytes to the wrong command has a bug, and silence would hide it.
+pub(crate) fn run_with_bytes(command: &str, args_json: &str, input: Option<Vec<u8>>) -> Answer {
+    match dispatch(command, args_json, input) {
+        Ok(answer) => answer,
+        Err(payload) => Answer {
+            envelope: err_envelope(&payload),
+            payload: None,
+        },
     }
 }
 
-fn dispatch(command: &str, args_json: &str) -> Result<String, ErrorPayload> {
-    match command {
-        "generate_password" => {
+fn dispatch(
+    command: &str,
+    args_json: &str,
+    input: Option<Vec<u8>>,
+) -> Result<Answer, ErrorPayload> {
+    let parsed = Command::parse(command).ok_or_else(|| {
+        ErrorPayload::bridge(
+            "UnknownCommand",
+            format!("There is no command named '{}'", command),
+        )
+    })?;
+
+    // The match is over the enum, so a command added to `commands` without a branch here does not
+    // compile - the registry and the implementation cannot drift apart
+    match parsed {
+        Command::GeneratePassword => {
+            reject_bytes(parsed, input)?;
             // Absent or empty arguments mean the core's defaults
             let options: PasswordGenerationOptions = args_or_default(args_json)?;
             let password = options.generate().map_err(|e| ErrorPayload::of(&e))?;
-            ok_envelope(&GeneratedPassword { password })
+            Ok(Answer {
+                envelope: ok_envelope(&GeneratedPassword { password })?,
+                payload: None,
+            })
         }
-        unknown => Err(ErrorPayload::bridge(
-            "UnknownCommand",
-            format!("There is no command named '{}'", unknown),
+    }
+}
+
+fn reject_bytes(command: Command, input: Option<Vec<u8>>) -> Result<(), ErrorPayload> {
+    match input {
+        None => Ok(()),
+        Some(bytes) => Err(ErrorPayload::bridge(
+            "InvalidArguments",
+            format!(
+                "The command {:?} takes no bytes, but {} were sent",
+                command,
+                bytes.len()
+            ),
         )),
     }
 }
@@ -79,6 +125,17 @@ mod tests {
     fn an_unknown_command_is_an_error_and_not_a_panic() {
         let json = run("no_such_command", "{}");
         assert!(json.contains(r#""kind":"UnknownCommand""#), "{}", json);
+    }
+
+    #[test]
+    fn bytes_sent_to_a_command_that_takes_none_are_refused() {
+        let answer = super::run_with_bytes("generate_password", "", Some(vec![1, 2, 3]));
+        assert!(
+            answer.envelope.contains(r#""kind":"InvalidArguments""#),
+            "{}",
+            answer.envelope
+        );
+        assert!(answer.payload.is_none());
     }
 
     #[test]

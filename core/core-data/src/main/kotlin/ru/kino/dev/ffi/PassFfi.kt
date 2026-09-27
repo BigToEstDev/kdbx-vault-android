@@ -32,4 +32,17 @@ internal object PassFfi {
      * @return the json envelope: `{"ok": ...}` or `{"err": {"kind", "message"}}`
      */
     external fun invoke(command: String, argsJson: String): String
+
+    /**
+     * Runs one command across the binary boundary, for the calls that carry secrets or a database.
+     *
+     * Arguments are bytes rather than a String so the caller can wipe them after the call - a password
+     * inside a String cannot be cleared on the jvm. The answer is a single frame, see [FfiFrame].
+     *
+     * @param command name of the command, e.g. `read_kdbx`
+     * @param args utf-8 json object of arguments
+     * @param input bytes the command reads, e.g. the contents of a database file; null when it takes none
+     * @return the frame: 4 bytes of envelope length, the envelope, then the payload
+     */
+    external fun invokeBinary(command: String, args: ByteArray, input: ByteArray?): ByteArray
 }
