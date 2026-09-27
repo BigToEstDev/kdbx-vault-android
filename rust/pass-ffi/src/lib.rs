@@ -22,6 +22,7 @@ use std::panic;
 use jni::objects::{JByteArray, JClass, JString};
 use jni::sys::{jbyteArray, jstring};
 use jni::JNIEnv;
+use zeroize::Zeroize;
 
 mod commands;
 mod dispatch;
@@ -187,13 +188,11 @@ fn read_bytes<'local>(
         .map_err(|e| format!("the argument '{}' could not be read: {}", name, e))
 }
 
-// Overwrites a buffer that may have held a secret. Deliberately not `zeroize`: the crate is not a direct
-// dependency here yet, and `write_volatile` gives the same guarantee that matters - the writes cannot be
-// optimised away because the buffer is dead afterwards.
+// Overwrites a buffer that may have held a secret. `zeroize` rather than a plain loop: the compiler is
+// free to drop writes to memory nothing reads again, and this crate is where that would matter. The core
+// wipes its own buffers the same way (`db/kdbx_file.rs`).
 fn wipe(buffer: &mut [u8]) {
-    for byte in buffer.iter_mut() {
-        unsafe { std::ptr::write_volatile(byte, 0) };
-    }
+    buffer.zeroize();
 }
 
 fn throw_bytes(env: &mut JNIEnv<'_>, message: &str) -> jbyteArray {
