@@ -17,3 +17,6 @@ build/
 .externalNativeBuild
 .cxx
 local.properties
+
+# Rust bridge (pass-ffi): cargo artifacts. The .so lands in app/build/rustJniLibs, already ignored
+/rust/*/target/

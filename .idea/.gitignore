@@ -1,3 +1,18 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+
+# Per-developer IDE state, not a project decision. What the root .gitignore already covers
+# (caches, libraries, modules.xml, gradle.xml, misc.xml, compiler.xml, kotlinc.xml, navEditor.xml,
+# assetWizardSettings.xml) is not repeated here.
+/deviceManager.xml
+/deploymentTargetDropDown.xml
+/appInsightsSettings.xml
+/other.xml
+/inspectionProfiles/
+/sonarlint/
+/codeStyles/
+
+# Still tracked, although they are personal too: AndroidProjectSystem.xml,
+# deploymentTargetSelector.xml, runConfigurations.xml. Dropping them needs `git rm --cached`,
+# which is a separate decision - see plan/todo/android in pass-docs.

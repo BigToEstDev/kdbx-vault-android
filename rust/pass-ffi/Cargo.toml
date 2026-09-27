@@ -1,0 +1,31 @@
+[package]
+name = "pass-ffi"
+version = "0.1.0"
+authors = ["BigToEstDev"]
+edition = "2021"
+publish = false
+## The core is GPL-3.0 and this crate links it statically, so the shared library and the apk that
+## carries it are GPL-3.0 as well. See plan/todo/android/naming-and-license.md in pass-docs.
+license = "GPL-3.0-only"
+
+[lib]
+## The jni bridge is loaded by the jvm as a shared library. "lib" is kept alongside so the crate can
+## also be built and unit tested on the host, where there is no Android at all.
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+## The core lives in its own repository, checked out next to pass-app. Moves to git + rev once there
+## is a CI that cannot rely on a sibling directory.
+kdbx-rust-core = { path = "../../../pass-rust-core" }
+
+## Jni bindings. This crate is the only place in the project allowed to contain unsafe code: the core
+## is #![forbid(unsafe_code)] and cannot host a #[no_mangle] function at all.
+jni = "0.21"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+log = "0.4"
+
+## Routes the core's log macros to logcat. Android only - on the host the crate builds without it.
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.15"

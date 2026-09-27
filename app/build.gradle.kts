@@ -1,5 +1,7 @@
 plugins {
     id("android-compose-app")
+    // Builds rust/pass-ffi with cargo-ndk and puts the .so into src/main/jniLibs
+    id("rust-bridge")
     alias(libs.plugins.kotlin.serialization)
 }
 
@@ -31,4 +33,6 @@ dependencies {
 
     implementation(projects.core.coreDomain)
     implementation(projects.core.corePres)
+    // The native core: its Hilt module binds NativeCore to the jni implementation
+    implementation(projects.core.coreData)
 }
