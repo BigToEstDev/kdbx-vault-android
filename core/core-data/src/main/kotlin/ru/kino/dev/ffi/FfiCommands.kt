@@ -56,6 +56,10 @@ internal object FfiCommands {
     const val SET_ENTRY_OTP = "set_entry_otp"
     const val DELETE_ENTRY_OTP = "delete_entry_otp"
 
+    // Search over every field of every entry, and the tags a picker offers
+    const val SEARCH_TERM = "search_term"
+    const val COLLECT_ENTRY_GROUP_TAGS = "collect_entry_group_tags"
+
     const val GENERATE_PASSWORD = "generate_password"
 
     /** Every name this side knows. Kept in sync with the contract file by the test. */
@@ -94,6 +98,8 @@ internal object FfiCommands {
         IS_VALID_OTP_URL,
         SET_ENTRY_OTP,
         DELETE_ENTRY_OTP,
+        SEARCH_TERM,
+        COLLECT_ENTRY_GROUP_TAGS,
         GENERATE_PASSWORD,
     )
 }

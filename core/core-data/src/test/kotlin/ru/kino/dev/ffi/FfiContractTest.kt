@@ -113,6 +113,12 @@ class FfiContractTest {
         assertKeysMatch(FfiCommands.IS_VALID_OTP_URL, OtpUrlValidityDto.serializer())
     }
 
+    @Test
+    fun `a search result and the tags are read exactly as the bridge describes them`() {
+        assertKeysMatch(FfiCommands.SEARCH_TERM, EntrySearchResultDto.serializer())
+        assertKeysMatch(FfiCommands.COLLECT_ENTRY_GROUP_TAGS, AllTagsDto.serializer())
+    }
+
     /**
      * Everything that only reports that it went through answers the same way, and the point of this
      * test is exactly that: one model on this side, and no command quietly growing a payload the app

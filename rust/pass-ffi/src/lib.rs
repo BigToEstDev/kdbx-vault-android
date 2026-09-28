@@ -42,6 +42,8 @@ mod init;
 mod otp_tests;
 mod key_store;
 #[cfg(test)]
+mod search_tests;
+#[cfg(test)]
 mod lifecycle_tests;
 #[cfg(test)]
 mod test_support;

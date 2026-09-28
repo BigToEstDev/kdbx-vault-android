@@ -90,6 +90,10 @@ commands! {
     SetEntryOtp => "set_entry_otp",
     DeleteEntryOtp => "delete_entry_otp",
 
+    // Search over every field of every entry, and the tags a picker offers
+    SearchTerm => "search_term",
+    CollectEntryGroupTags => "collect_entry_group_tags",
+
     GeneratePassword => "generate_password",
 }
 

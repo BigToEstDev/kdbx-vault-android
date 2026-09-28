@@ -502,5 +502,31 @@ internal data class FormedOtpUrlDto(@SerialName("otp_url") val otpUrl: String)
 @Serializable
 internal data class OtpUrlValidityDto(val valid: Boolean)
 
+/** Arguments of `search_term`. The core matches it against every field, protected ones included. */
+@Serializable
+internal data class SearchTermDto(
+    @SerialName("db_key") val dbKey: String,
+    val term: String,
+)
+
+/**
+ * The entries matching a term, with the term beside them.
+ *
+ * The term comes back so a screen can drop the answer to a search the user has already typed past -
+ * the calls are asynchronous and may finish out of order.
+ */
+@Serializable
+internal data class EntrySearchResultDto(
+    val term: String,
+    @SerialName("entry_items") val entryItems: List<EntrySummaryDto> = emptyList(),
+)
+
+/** Every tag in the database - of entries and of groups, kept apart. */
+@Serializable
+internal data class AllTagsDto(
+    @SerialName("entry_tags") val entryTags: List<String> = emptyList(),
+    @SerialName("group_tags") val groupTags: List<String> = emptyList(),
+)
+
 /** An empty json object, for commands that take no arguments. */
 internal val NO_ARGUMENTS: JsonObject = JsonObject(emptyMap())
