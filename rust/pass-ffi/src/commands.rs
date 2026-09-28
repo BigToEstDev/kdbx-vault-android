@@ -112,7 +112,14 @@ commands! {
     DbChecksumHash => "db_checksum_hash",
     MergeKdbxWithReader => "merge_kdbx_with_reader",
 
+    // The home screen: the tiles with their counts, the entry types to create from, and the one
+    // irreversible step of the recycle bin
+    CombinedCategoryDetails => "combined_category_details",
+    EntryTypeHeaders => "entry_type_headers",
+    EmptyTrash => "empty_trash",
+
     GeneratePassword => "generate_password",
+    AnalyzedPassword => "analyzed_password",
 }
 
 #[cfg(test)]

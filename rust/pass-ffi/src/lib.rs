@@ -26,6 +26,8 @@ use zeroize::Zeroize;
 
 mod commands;
 #[cfg(test)]
+mod catalog_tests;
+#[cfg(test)]
 mod contract;
 mod dispatch;
 mod errors;

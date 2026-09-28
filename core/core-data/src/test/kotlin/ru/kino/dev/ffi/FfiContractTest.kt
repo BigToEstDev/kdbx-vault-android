@@ -143,6 +143,17 @@ class FfiContractTest {
         assertKeysMatch(FfiCommands.MERGE_DATABASE, MergeResultDto.serializer())
     }
 
+    @Test
+    fun `the home screen is read exactly as the bridge describes it`() {
+        assertKeysMatch(FfiCommands.COMBINED_CATEGORY_DETAILS, EntryCategoriesDto.serializer())
+        assertKeysMatch(FfiCommands.ENTRY_TYPE_HEADERS, EntryTypeHeadersDto.serializer())
+    }
+
+    @Test
+    fun `a rated password is read exactly as the bridge describes it`() {
+        assertKeysMatch(FfiCommands.ANALYZED_PASSWORD, AnalyzedPasswordDto.serializer())
+    }
+
     /**
      * Everything that only reports that it went through answers the same way, and the point of this
      * test is exactly that: one model on this side, and no command quietly growing a payload the app
@@ -170,6 +181,7 @@ class FfiContractTest {
             FfiCommands.VERIFY_DB_FILE_CHECKSUM,
             FfiCommands.SET_DB_FILE_CHECKSUM,
             FfiCommands.GENERATE_KEY_FILE,
+            FfiCommands.EMPTY_TRASH,
             FfiCommands.SET_ENTRY_OTP,
             FfiCommands.DELETE_ENTRY_OTP,
         ).forEach { command ->

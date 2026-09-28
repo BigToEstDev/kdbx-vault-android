@@ -687,5 +687,91 @@ internal data class MergedEntryDto(
     @SerialName("previous_parent_group_uuid") val previousParentGroupUuid: String? = null,
 )
 
+/**
+ * Arguments of `combined_category_details`.
+ *
+ * `grouping` is `as_group_categories`, `as_types` or `as_tags` - what the tiles below the standard
+ * ones are grouped by.
+ */
+@Serializable
+internal data class CategoriesArgsDto(
+    @SerialName("db_key") val dbKey: String,
+    val grouping: String,
+)
+
+/** The tiles of the home screen: the standard ones, and those of the chosen grouping. */
+@Serializable
+internal data class EntryCategoriesDto(
+    @SerialName("general_categories") val generalCategories: List<CategoryDetailDto> = emptyList(),
+    @SerialName("grouping_kind") val groupingKind: String,
+    @SerialName("grouped_categories") val groupedCategories: List<CategoryDetailDto> = emptyList(),
+)
+
+/** One tile, with the counts it shows. */
+@Serializable
+internal data class CategoryDetailDto(
+    val title: String,
+    @SerialName("display_title") val displayTitle: String? = null,
+    @SerialName("entries_count") val entriesCount: Int,
+    @SerialName("groups_count") val groupsCount: Int,
+    @SerialName("icon_id") val iconId: Int,
+    @SerialName("icon_name") val iconName: String? = null,
+    @SerialName("entry_type_uuid") val entryTypeUuid: String? = null,
+    @SerialName("group_uuid") val groupUuid: String? = null,
+    @SerialName("parent_group_uuid") val parentGroupUuid: String? = null,
+    @SerialName("tag_id") val tagId: String? = null,
+)
+
+/**
+ * The entry types to create an entry from.
+ *
+ * `custom` is answered and stays empty in v1: making custom types needs an editor screen, which is
+ * not in v1, but a database written elsewhere may well carry them.
+ */
+@Serializable
+internal data class EntryTypeHeadersDto(
+    val standard: List<EntryTypeHeaderDto> = emptyList(),
+    val custom: List<EntryTypeHeaderDto> = emptyList(),
+)
+
+@Serializable
+internal data class EntryTypeHeaderDto(
+    val uuid: String,
+    val name: String,
+    @SerialName("icon_name") val iconName: String? = null,
+)
+
+/**
+ * A generated password together with its rating.
+ *
+ * One call rather than generating and then scoring: the rating belongs to *this* password, and two
+ * calls would let a screen show the rating of one the user is no longer looking at.
+ */
+@Serializable
+internal data class AnalyzedPasswordDto(
+    val password: String,
+    @SerialName("analyzed_password") val analyzedPassword: String,
+    val score: PasswordScoreDto,
+    val length: Int,
+    @SerialName("numbers_count") val numbersCount: Int,
+    @SerialName("lowercase_letters_count") val lowercaseLettersCount: Int,
+    @SerialName("uppercase_letters_count") val uppercaseLettersCount: Int,
+    @SerialName("symbols_count") val symbolsCount: Int,
+    @SerialName("spaces_count") val spacesCount: Int,
+    @SerialName("other_characters_count") val otherCharactersCount: Int,
+    @SerialName("consecutive_count") val consecutiveCount: Int,
+    @SerialName("non_consecutive_count") val nonConsecutiveCount: Int,
+    @SerialName("progressive_count") val progressiveCount: Int,
+    @SerialName("is_common") val isCommon: Boolean,
+)
+
+/** How strong the password is: the name of the band, and the text to show. */
+@Serializable
+internal data class PasswordScoreDto(
+    val name: String,
+    @SerialName("raw_value") val rawValue: Double,
+    @SerialName("score_text") val scoreText: String,
+)
+
 /** An empty json object, for commands that take no arguments. */
 internal val NO_ARGUMENTS: JsonObject = JsonObject(emptyMap())

@@ -12,7 +12,7 @@
 use crate::commands::Command;
 use crate::errors::{err_envelope, ErrorPayload};
 use crate::handlers::{
-    entries, generator, groups, history, integrity, lifecycle, otp, search, settings,
+    catalog, entries, generator, groups, history, integrity, lifecycle, otp, search, settings,
 };
 
 /// What a command answers: the envelope always, and raw bytes when the command produces a file - the
@@ -111,7 +111,12 @@ fn dispatch(command: &str, args_json: &str, input: Option<Vec<u8>>) -> Result<An
         Command::DbChecksumHash => integrity::db_checksum_hash(args_json, input),
         Command::MergeKdbxWithReader => integrity::merge_kdbx_with_reader(args_json, input),
 
+        Command::CombinedCategoryDetails => catalog::combined_category_details(args_json, input),
+        Command::EntryTypeHeaders => catalog::entry_type_headers(args_json, input),
+        Command::EmptyTrash => catalog::empty_trash(args_json, input),
+
         Command::GeneratePassword => generator::generate_password(args_json, input),
+        Command::AnalyzedPassword => generator::analyzed_password(args_json, input),
     }
 }
 

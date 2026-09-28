@@ -78,7 +78,14 @@ internal object FfiCommands {
     const val DB_CHECKSUM_HASH = "db_checksum_hash"
     const val MERGE_DATABASE = "merge_kdbx_with_reader"
 
+    // The home screen: the tiles with their counts, the entry types to create from, and the one
+    // irreversible step of the recycle bin
+    const val COMBINED_CATEGORY_DETAILS = "combined_category_details"
+    const val ENTRY_TYPE_HEADERS = "entry_type_headers"
+    const val EMPTY_TRASH = "empty_trash"
+
     const val GENERATE_PASSWORD = "generate_password"
+    const val ANALYZED_PASSWORD = "analyzed_password"
 
     /** Every name this side knows. Kept in sync with the contract file by the test. */
     val ALL: Set<String> = setOf(
@@ -131,6 +138,10 @@ internal object FfiCommands {
         SET_DB_FILE_CHECKSUM,
         DB_CHECKSUM_HASH,
         MERGE_DATABASE,
+        COMBINED_CATEGORY_DETAILS,
+        ENTRY_TYPE_HEADERS,
+        EMPTY_TRASH,
         GENERATE_PASSWORD,
+        ANALYZED_PASSWORD,
     )
 }
