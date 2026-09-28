@@ -38,8 +38,46 @@ class FfiContractTest {
     }
 
     @Test
-    fun `closing answers exactly as the bridge describes it`() {
-        assertKeysMatch(FfiCommands.CLOSE_DATABASE, ClosedDto.serializer())
+    fun `the tree of groups is read exactly as the bridge describes it`() {
+        assertKeysMatch(FfiCommands.GROUPS_SUMMARY_DATA, GroupTreeDto.serializer())
+    }
+
+    @Test
+    fun `a group is read exactly as the bridge describes it`() {
+        assertKeysMatch(FfiCommands.GET_GROUP_BY_ID, GroupDto.serializer())
+    }
+
+    // A blank group is a group like any other, and the model is shared - so both shapes are checked
+    // against it rather than one standing in for the other
+    @Test
+    fun `a blank group is read exactly as the bridge describes it`() {
+        assertKeysMatch(FfiCommands.NEW_BLANK_GROUP, GroupDto.serializer())
+        assertKeysMatch(FfiCommands.NEW_BLANK_GROUP_WITH_PARENT, GroupDto.serializer())
+    }
+
+    @Test
+    fun `a cloned group answers with the uuid of the copy`() {
+        assertKeysMatch(FfiCommands.CLONE_GROUP, ClonedGroupDto.serializer())
+    }
+
+    /**
+     * Everything that only reports that it went through answers the same way, and the point of this
+     * test is exactly that: one model on this side, and no command quietly growing a payload the app
+     * would never read.
+     */
+    @Test
+    fun `commands that change something and report nothing all answer alike`() {
+        listOf(
+            FfiCommands.CLOSE_DATABASE,
+            FfiCommands.INSERT_GROUP,
+            FfiCommands.UPDATE_GROUP,
+            FfiCommands.MOVE_GROUP,
+            FfiCommands.SORT_SUB_GROUPS,
+            FfiCommands.MOVE_GROUP_TO_RECYCLE_BIN,
+            FfiCommands.REMOVE_GROUP_PERMANENTLY,
+        ).forEach { command ->
+            assertKeysMatch(command, DoneDto.serializer())
+        }
     }
 
     @Test

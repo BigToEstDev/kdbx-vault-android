@@ -26,6 +26,11 @@ jni = "0.21"
 ## because this crate wipes its own copies at the boundary - nothing new is pulled in.
 zeroize = "1"
 
+## The uuids of groups and entries travel as strings and are parsed by serde before any database is
+## touched. The same version the core already depends on, so cargo resolves it to one crate and the
+## types are the ones the core's signatures ask for.
+uuid = { version = "1.18.1", features = ["serde"] }
+
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 log = "0.4"

@@ -81,7 +81,7 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
                 FfiCommands.CLOSE_DATABASE,
                 encode(DbKeyDto.serializer(), DbKeyDto(dbKey)),
             )
-            FfiEnvelope.unwrap(envelope, ClosedDto.serializer())
+            FfiEnvelope.unwrap(envelope, DoneDto.serializer())
         }
     }
 

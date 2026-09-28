@@ -1,26 +1,17 @@
-//! Name of a command -> method of the core.
+//! Name of a command -> the handler that answers it.
 //!
 //! Every call is `command` plus a json object of arguments, and the answer is the envelope from
 //! `errors`. One function instead of a jni function per operation: the core's types already carry serde
 //! derives, so json is the cheapest possible bridge, and adding an operation later touches this file
-//! only - not the jni layer, not Gradle, not the `.so` name.
+//! and one handler - not the jni layer, not Gradle, not the `.so` name.
 //!
-//! Arguments are our own structs, declared here: the core's argument types carry names we do not want in
-//! the Kotlin models (`camelCase` in one enum, `group_uuid` where it means the parent). Answers are the
-//! core's types as they are - they are what the contract files in `contract/` pin.
-//!
-//! The one exception is creating a database: `NewDatabase` keeps its fields private and can only be
-//! built through serde, so its own shape is the argument shape. The contract file pins it like any other.
-
-use std::io::Cursor;
-
-use serde::de::DeserializeOwned;
-use serde::Deserialize;
-
-use kdbx_rust_core::db_service::{self, NewDatabase, PasswordGenerationOptions};
+//! This file is the routing table and nothing else. The match is over the enum, so a command added to
+//! `commands` without a branch here does not compile: the registry and the implementation cannot drift
+//! apart. The work lives in `handlers`, a module per block of the api.
 
 use crate::commands::Command;
-use crate::errors::{err_envelope, ok_envelope, ErrorPayload};
+use crate::errors::{err_envelope, ErrorPayload};
+use crate::handlers::{generator, groups, lifecycle};
 
 /// What a command answers: the envelope always, and raw bytes when the command produces a file - the
 /// bytes of a database on save. Kept apart from the envelope on purpose, so a database never has to be
@@ -37,8 +28,7 @@ pub(crate) fn run(command: &str, args_json: &str) -> String {
 }
 
 /// The same, for the binary boundary: arguments may carry secrets and the command may be handed the
-/// bytes of a database. Commands that take no bytes reject them rather than ignore them - a caller that
-/// sends bytes to the wrong command has a bug, and silence would hide it.
+/// bytes of a database.
 pub(crate) fn run_with_bytes(command: &str, args_json: &str, input: Option<Vec<u8>>) -> Answer {
     match dispatch(command, args_json, input) {
         Ok(answer) => answer,
@@ -49,11 +39,7 @@ pub(crate) fn run_with_bytes(command: &str, args_json: &str, input: Option<Vec<u
     }
 }
 
-fn dispatch(
-    command: &str,
-    args_json: &str,
-    input: Option<Vec<u8>>,
-) -> Result<Answer, ErrorPayload> {
+fn dispatch(command: &str, args_json: &str, input: Option<Vec<u8>>) -> Result<Answer, ErrorPayload> {
     let parsed = Command::parse(command).ok_or_else(|| {
         ErrorPayload::bridge(
             "UnknownCommand",
@@ -61,160 +47,26 @@ fn dispatch(
         )
     })?;
 
-    // The match is over the enum, so a command added to `commands` without a branch here does not
-    // compile - the registry and the implementation cannot drift apart
     match parsed {
-        Command::CreateAndWriteToWriter => {
-            reject_bytes(parsed, input)?;
-            let new_db: NewDatabase = args(args_json)?;
+        Command::CreateAndWriteToWriter => lifecycle::create(args_json, input),
+        Command::ReadKdbx => lifecycle::read(args_json, input),
+        Command::SaveKdbxToWriter => lifecycle::save(args_json, input),
+        Command::CloseKdbx => lifecycle::close(args_json, input),
 
-            // The core writes the fresh database into the writer, so the writer is a buffer and the
-            // bytes go back to Kotlin, which owns the file through SAF
-            let mut buffer = Cursor::new(Vec::<u8>::new());
-            let loaded = db_service::create_and_write_to_writer(&mut buffer, new_db)
-                .map_err(|e| ErrorPayload::of(&e))?;
+        Command::GroupsSummaryData => groups::groups_summary_data(args_json, input),
+        Command::GetGroupById => groups::get_group_by_id(args_json, input),
+        Command::NewBlankGroup => groups::new_blank_group(args_json, input),
+        Command::NewBlankGroupWithParent => groups::new_blank_group_with_parent(args_json, input),
+        Command::InsertGroup => groups::insert_group(args_json, input),
+        Command::UpdateGroup => groups::update_group(args_json, input),
+        Command::MoveGroup => groups::move_group(args_json, input),
+        Command::SortSubGroups => groups::sort_sub_groups(args_json, input),
+        Command::CloneGroup => groups::clone_group(args_json, input),
+        Command::MoveGroupToRecycleBin => groups::move_group_to_recycle_bin(args_json, input),
+        Command::RemoveGroupPermanently => groups::remove_group_permanently(args_json, input),
 
-            Ok(Answer {
-                envelope: ok_envelope(&loaded)?,
-                payload: Some(buffer.into_inner()),
-            })
-        }
-
-        Command::ReadKdbx => {
-            let bytes = require_bytes(parsed, input)?;
-            let args: ReadKdbxArgs = args(args_json)?;
-
-            let mut reader = Cursor::new(bytes);
-            let loaded = db_service::read_kdbx(
-                &mut reader,
-                &args.db_key,
-                args.password.as_deref(),
-                args.key_file_name.as_deref(),
-                args.file_name.as_deref(),
-            )
-            .map_err(|e| ErrorPayload::of(&e))?;
-
-            Ok(Answer {
-                envelope: ok_envelope(&loaded)?,
-                payload: None,
-            })
-        }
-
-        Command::SaveKdbxToWriter => {
-            reject_bytes(parsed, input)?;
-            let args: DbKeyArgs = args(args_json)?;
-
-            // A fresh buffer, never the previous contents of the file: `save_kdbx_to_writer` does not
-            // truncate its writer, and a shorter database would otherwise keep the tail of the older one
-            let mut buffer = Cursor::new(Vec::<u8>::new());
-            let saved = db_service::save_kdbx_to_writer(&mut buffer, &args.db_key)
-                .map_err(|e| ErrorPayload::of(&e))?;
-
-            Ok(Answer {
-                envelope: ok_envelope(&saved)?,
-                payload: Some(buffer.into_inner()),
-            })
-        }
-
-        Command::CloseKdbx => {
-            reject_bytes(parsed, input)?;
-            let args: DbKeyArgs = args(args_json)?;
-
-            db_service::close_kdbx(&args.db_key).map_err(|e| ErrorPayload::of(&e))?;
-
-            Ok(Answer {
-                envelope: ok_envelope(&Closed { closed: true })?,
-                payload: None,
-            })
-        }
-
-        Command::GeneratePassword => {
-            reject_bytes(parsed, input)?;
-            // Absent or empty arguments mean the core's defaults
-            let options: PasswordGenerationOptions = args_or_default(args_json)?;
-            let password = options.generate().map_err(|e| ErrorPayload::of(&e))?;
-            Ok(Answer {
-                envelope: ok_envelope(&GeneratedPassword { password })?,
-                payload: None,
-            })
-        }
+        Command::GeneratePassword => generator::generate_password(args_json, input),
     }
-}
-
-/// Arguments of every command that works on an open database.
-#[derive(Deserialize)]
-struct DbKeyArgs {
-    /// The uri of the database file, which is also its identity in the core's store
-    db_key: String,
-}
-
-/// Arguments of `read_kdbx`. The bytes of the file arrive beside them, not inside.
-#[derive(Deserialize)]
-struct ReadKdbxArgs {
-    db_key: String,
-    password: Option<String>,
-    /// Path to a key file in the app's own storage - the core reads key files by path, not by uri
-    key_file_name: Option<String>,
-    /// The name to show. Passed in because the core would otherwise derive it from `db_key`, and a SAF
-    /// uri has no readable file name in it
-    file_name: Option<String>,
-}
-
-#[derive(serde::Serialize)]
-struct Closed {
-    closed: bool,
-}
-
-fn require_bytes(command: Command, input: Option<Vec<u8>>) -> Result<Vec<u8>, ErrorPayload> {
-    input.ok_or_else(|| {
-        ErrorPayload::bridge(
-            "InvalidArguments",
-            format!("The command {:?} needs the bytes of a database", command),
-        )
-    })
-}
-
-fn reject_bytes(command: Command, input: Option<Vec<u8>>) -> Result<(), ErrorPayload> {
-    match input {
-        None => Ok(()),
-        Some(bytes) => Err(ErrorPayload::bridge(
-            "InvalidArguments",
-            format!(
-                "The command {:?} takes no bytes, but {} were sent",
-                command,
-                bytes.len()
-            ),
-        )),
-    }
-}
-
-#[derive(serde::Serialize)]
-struct GeneratedPassword {
-    password: String,
-}
-
-// Arguments that are required: an empty object is not a valid substitute, because a missing db_key is a
-// bug in the caller rather than a request for a default
-fn args<T: DeserializeOwned>(args_json: &str) -> Result<T, ErrorPayload> {
-    serde_json::from_str(args_json).map_err(|e| {
-        ErrorPayload::bridge(
-            "InvalidArguments",
-            format!("The arguments could not be read: {}", e),
-        )
-    })
-}
-
-fn args_or_default<T: DeserializeOwned + Default>(args_json: &str) -> Result<T, ErrorPayload> {
-    if args_json.trim().is_empty() {
-        return Ok(T::default());
-    }
-
-    serde_json::from_str(args_json).map_err(|e| {
-        ErrorPayload::bridge(
-            "InvalidArguments",
-            format!("The arguments could not be read: {}", e),
-        )
-    })
 }
 
 #[cfg(test)]

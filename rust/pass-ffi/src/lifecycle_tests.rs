@@ -6,49 +6,9 @@
 
 use crate::contract::assert_shape;
 use crate::dispatch::run_with_bytes;
-use crate::key_store;
-
-const KDBX_SIGNATURE: [u8; 4] = [0x03, 0xd9, 0xa2, 0x9a];
-
-// The core keeps open databases in one process wide store keyed by db_key, and cargo runs tests in
-// parallel - so every test works on a key of its own. A shared key made them close each other's database
-fn key_of(test: &str) -> String {
-    format!("content://test/{}.kdbx", test)
-}
-
-// Argon2 with the core's defaults costs about a second per call and these tests are not about the kdf, so
-// the cheapest sane parameters keep the suite fast
-fn new_db_args(db_key: &str) -> String {
-    format!(
-        r#"{{
-    "database_name": "Test",
-    "database_description": "Created by the lifecycle test",
-    "database_file_name": "{}",
-    "file_name": "lifecycle.kdbx",
-    "kdf": {{"algorithm": "Argon2id", "memory": 16384, "iterations": 2, "parallelism": 1, "salt": []}},
-    "cipher_id": "Aes256",
-    "password": "open sesame",
-    "key_file_name": null
-}}"#,
-        db_key
-    )
-}
-
-fn db_key_args(db_key: &str) -> String {
-    format!(r#"{{"db_key":"{}"}}"#, db_key)
-}
-
-fn read_args(db_key: &str, password: &str) -> String {
-    format!(
-        r#"{{"db_key":"{}","password":"{}","key_file_name":null,"file_name":"lifecycle.kdbx"}}"#,
-        db_key, password
-    )
-}
-
-// Every test needs the key store the core asks for, and installing it twice is a no-op
-fn prepare() {
-    key_store::install();
-}
+use crate::test_support::{
+    db_key_args, key_of, new_db_args, prepare, read_args, KDBX_SIGNATURE,
+};
 
 #[test]
 fn a_database_is_created_read_saved_and_closed() {
@@ -74,7 +34,7 @@ fn a_database_is_created_read_saved_and_closed() {
     // Close it, so reading it back goes through the real path rather than the cache
     let closed = run_with_bytes("close_kdbx", &db_key_args(&db_key), None);
     assert!(
-        closed.envelope.contains(r#""closed":true"#),
+        closed.envelope.contains(r#""done":true"#),
         "{}",
         closed.envelope
     );

@@ -52,6 +52,19 @@ commands! {
     SaveKdbxToWriter => "save_kdbx_to_writer",
     CloseKdbx => "close_kdbx",
 
+    // Groups: the tree the ui draws, one group for its edit screen, and the operations that change it
+    GroupsSummaryData => "groups_summary_data",
+    GetGroupById => "get_group_by_id",
+    NewBlankGroup => "new_blank_group",
+    NewBlankGroupWithParent => "new_blank_group_with_parent",
+    InsertGroup => "insert_group",
+    UpdateGroup => "update_group",
+    MoveGroup => "move_group",
+    SortSubGroups => "sort_sub_groups",
+    CloneGroup => "clone_group",
+    MoveGroupToRecycleBin => "move_group_to_recycle_bin",
+    RemoveGroupPermanently => "remove_group_permanently",
+
     GeneratePassword => "generate_password",
 }
 

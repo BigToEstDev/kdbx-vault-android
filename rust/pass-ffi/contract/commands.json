@@ -1,7 +1,18 @@
 [
+  "clone_group",
   "close_kdbx",
   "create_and_write_to_writer",
   "generate_password",
+  "get_group_by_id",
+  "groups_summary_data",
+  "insert_group",
+  "move_group",
+  "move_group_to_recycle_bin",
+  "new_blank_group",
+  "new_blank_group_with_parent",
   "read_kdbx",
-  "save_kdbx_to_writer"
+  "remove_group_permanently",
+  "save_kdbx_to_writer",
+  "sort_sub_groups",
+  "update_group"
 ]

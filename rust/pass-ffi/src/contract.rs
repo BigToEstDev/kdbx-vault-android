@@ -10,13 +10,20 @@
 
 use serde_json::{json, Value};
 
+/// The key a uuid keyed map gets in the shape, standing for every entry of it.
+const UUID_KEY: &str = "<uuid>";
+
 /// Replaces every value with the name of its type, recursively.
 pub(crate) fn shape(value: &Value) -> Value {
     match value {
+        // An object is either a struct, whose keys are the contract, or a map keyed by uuid - the tree
+        // of groups is one. Keeping a generated uuid in the file would pin the random name of one test
+        // group and change on every run, so such a key collapses into `<uuid>`: what matters there is
+        // the shape of the value, and every entry has the same one
         Value::Object(fields) => Value::Object(
             fields
                 .iter()
-                .map(|(key, value)| (key.clone(), shape(value)))
+                .map(|(key, value)| (normalise_key(key), shape(value)))
                 .collect(),
         ),
         // Only the first element: a list is homogeneous here, and pinning its length would make the
@@ -31,6 +38,13 @@ pub(crate) fn shape(value: &Value) -> Value {
         // A null tells us nothing about the type, and an Option that happens to be None in the test
         // would pin the wrong shape. The name says so out loud
         Value::Null => json!("null-in-this-sample"),
+    }
+}
+
+fn normalise_key(key: &str) -> String {
+    match uuid::Uuid::parse_str(key) {
+        Ok(_) => UUID_KEY.to_string(),
+        Err(_) => key.to_string(),
     }
 }
 
@@ -68,6 +82,23 @@ mod tests {
         assert_eq!(
             shape(&sample),
             json!({"name": "string", "count": "number", "locked": "bool", "tags": ["string"]})
+        );
+    }
+
+    // The tree of groups is a map keyed by uuid, and a generated uuid in the file would differ on
+    // every run
+    #[test]
+    fn a_map_keyed_by_uuid_collapses_into_one_entry() {
+        let sample = json!({
+            "groups": {
+                "c33c5b9a-b110-44f8-8f1d-17ed7c1d27b9": {"name": "Root"},
+                "7b1a2c3d-0000-4000-8000-000000000000": {"name": "Work"},
+            }
+        });
+
+        assert_eq!(
+            shape(&sample),
+            json!({"groups": {"<uuid>": {"name": "string"}}})
         );
     }
 

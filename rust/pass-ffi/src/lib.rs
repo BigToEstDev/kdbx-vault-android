@@ -30,10 +30,15 @@ mod contract;
 mod dispatch;
 mod errors;
 mod frame;
+#[cfg(test)]
+mod group_tests;
+mod handlers;
 mod init;
 mod key_store;
 #[cfg(test)]
 mod lifecycle_tests;
+#[cfg(test)]
+mod test_support;
 
 /// Version of this crate plus the time it was built, so a stale `.so` is visible in the log instead of
 /// being debugged for an hour. Logged by the app on start.

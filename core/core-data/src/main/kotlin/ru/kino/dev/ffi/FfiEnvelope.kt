@@ -139,9 +139,135 @@ internal data class ReadKdbxDto(
     @SerialName("file_name") val fileName: String?,
 )
 
-/** Result of `close_kdbx`. */
+/**
+ * What a command that changed something answers when it has nothing to report back - closing a
+ * database, moving a group, sorting.
+ *
+ * One shape for all of them rather than a field named after each command: there is nothing to read here
+ * beyond "the call went through", and the failures that matter arrive as `err` instead.
+ */
 @Serializable
-internal data class ClosedDto(val closed: Boolean)
+internal data class DoneDto(val done: Boolean)
+
+/** Arguments naming one group of an open database. */
+@Serializable
+internal data class GroupIdDto(
+    @SerialName("db_key") val dbKey: String,
+    @SerialName("group_uuid") val groupUuid: String,
+)
+
+/**
+ * A group, exactly as the core has it.
+ *
+ * The one place where a core type is the model on both sides: `insert_group` and `update_group` take a
+ * whole group, and a hand written subset would silently drop what the core reads and writes back - the
+ * elements of another program's database it does not know. So the ui asks for a group, changes the
+ * fields it shows, and sends this same object back.
+ */
+@Serializable
+internal data class GroupDto(
+    val uuid: String,
+    @SerialName("parent_group_uuid") val parentGroupUuid: String,
+    val name: String,
+    @SerialName("icon_id") val iconId: Int,
+    val notes: String,
+    val tags: String,
+    @SerialName("is_expanded") val isExpanded: Boolean,
+    val times: TimesDto,
+    @SerialName("marked_category") val markedCategory: Boolean,
+    @SerialName("default_auto_type_sequence") val defaultAutoTypeSequence: String? = null,
+    @SerialName("enable_auto_type") val enableAutoType: Boolean? = null,
+    @SerialName("enable_searching") val enableSearching: Boolean? = null,
+    @SerialName("custom_icon_uuid") val customIconUuid: String? = null,
+    @SerialName("group_uuids") val groupUuids: List<String> = emptyList(),
+    @SerialName("entry_uuids") val entryUuids: List<String> = emptyList(),
+)
+
+/** The timestamps kdbx keeps for a group or an entry. Carried through untouched. */
+@Serializable
+internal data class TimesDto(
+    @SerialName("last_modification_time") val lastModificationTime: String,
+    @SerialName("creation_time") val creationTime: String,
+    @SerialName("last_access_time") val lastAccessTime: String,
+    val expires: Boolean,
+    @SerialName("expiry_time") val expiryTime: String,
+    @SerialName("location_changed") val locationChanged: String,
+    @SerialName("usage_count") val usageCount: Int,
+)
+
+/** Arguments of `insert_group` and `update_group`: the whole group goes back. */
+@Serializable
+internal data class GroupArgsDto(
+    @SerialName("db_key") val dbKey: String,
+    val group: GroupDto,
+)
+
+/**
+ * The whole tree of groups in one answer, keyed by uuid.
+ *
+ * One call rather than a walk from the root: the ui draws the tree at once, and the core has it in
+ * memory anyway.
+ */
+@Serializable
+internal data class GroupTreeDto(
+    @SerialName("root_uuid") val rootUuid: String,
+    @SerialName("recycle_bin_uuid") val recycleBinUuid: String,
+    @SerialName("deleted_group_uuids") val deletedGroupUuids: List<String> = emptyList(),
+    val groups: Map<String, GroupSummaryDto> = emptyMap(),
+)
+
+/** A group as the tree carries it: enough to draw a row, not enough to edit one. */
+@Serializable
+internal data class GroupSummaryDto(
+    val uuid: String,
+    @SerialName("parent_group_uuid") val parentGroupUuid: String,
+    val name: String,
+    @SerialName("icon_id") val iconId: Int,
+    @SerialName("custom_icon_uuid") val customIconUuid: String? = null,
+    @SerialName("group_uuids") val groupUuids: List<String> = emptyList(),
+    @SerialName("entry_uuids") val entryUuids: List<String> = emptyList(),
+)
+
+/** Arguments of `new_blank_group`: a group that belongs to no database yet. */
+@Serializable
+internal data class NewBlankGroupDto(
+    @SerialName("mark_as_category") val markAsCategory: Boolean,
+)
+
+/** Arguments of `new_blank_group_with_parent`. */
+@Serializable
+internal data class NewBlankGroupWithParentDto(
+    @SerialName("parent_group_uuid") val parentGroupUuid: String,
+    @SerialName("mark_as_category") val markAsCategory: Boolean,
+)
+
+/** Arguments of `move_group`. */
+@Serializable
+internal data class MoveGroupDto(
+    @SerialName("db_key") val dbKey: String,
+    @SerialName("group_uuid") val groupUuid: String,
+    @SerialName("new_parent_uuid") val newParentUuid: String,
+)
+
+/** Arguments of `sort_sub_groups`. `criteria` is `a_to_z` or `z_to_a`, as the bridge spells it. */
+@Serializable
+internal data class SortSubGroupsDto(
+    @SerialName("db_key") val dbKey: String,
+    @SerialName("group_uuid") val groupUuid: String,
+    val criteria: String,
+)
+
+/** Arguments of `clone_group`. An absent name keeps the name of the original. */
+@Serializable
+internal data class CloneGroupDto(
+    @SerialName("db_key") val dbKey: String,
+    @SerialName("group_uuid") val groupUuid: String,
+    @SerialName("new_name") val newName: String? = null,
+)
+
+/** Result of `clone_group`: the uuid of the copy. */
+@Serializable
+internal data class ClonedGroupDto(@SerialName("group_uuid") val groupUuid: String)
 
 /** An empty json object, for commands that take no arguments. */
 internal val NO_ARGUMENTS: JsonObject = JsonObject(emptyMap())
