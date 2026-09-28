@@ -11,7 +11,7 @@
 
 use crate::commands::Command;
 use crate::errors::{err_envelope, ErrorPayload};
-use crate::handlers::{entries, generator, groups, history, lifecycle};
+use crate::handlers::{entries, generator, groups, history, lifecycle, otp};
 
 /// What a command answers: the envelope always, and raw bytes when the command produces a file - the
 /// bytes of a database on save. Kept apart from the envelope on purpose, so a database never has to be
@@ -82,6 +82,12 @@ fn dispatch(command: &str, args_json: &str, input: Option<Vec<u8>>) -> Result<An
             history::delete_history_entry_by_index(args_json, input)
         }
         Command::DeleteHistoryEntries => history::delete_history_entries(args_json, input),
+
+        Command::EntryListCurrentOtps => otp::entry_list_current_otps(args_json, input),
+        Command::FormOtpUrl => otp::form_otp_url(args_json, input),
+        Command::IsValidOtpUrl => otp::is_valid_otp_url(args_json, input),
+        Command::SetEntryOtp => otp::set_entry_otp(args_json, input),
+        Command::DeleteEntryOtp => otp::delete_entry_otp(args_json, input),
 
         Command::GeneratePassword => generator::generate_password(args_json, input),
     }

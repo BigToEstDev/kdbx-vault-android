@@ -442,5 +442,65 @@ internal data class HistoryIndexDto(
     val index: Int,
 )
 
+/**
+ * The 2fa settings of an entry, as the bridge spells them.
+ *
+ * `secret_or_url` is either the shared secret or a whole `otpauth://` url - the core tells them apart.
+ * `hash_algorithm` is `sha1`, `sha256` or `sha512`: the core's own `SHA1` / `SHA256` / `SHA512` stays
+ * behind the boundary.
+ */
+@Serializable
+internal data class OtpSettingsDto(
+    @SerialName("secret_or_url") val secretOrUrl: String,
+    val period: Long? = null,
+    val digits: Int? = null,
+    @SerialName("hash_algorithm") val hashAlgorithm: String? = null,
+)
+
+/** Arguments of `set_entry_otp`: the settings, flattened next to the entry they belong to. */
+@Serializable
+internal data class SetEntryOtpDto(
+    @SerialName("db_key") val dbKey: String,
+    @SerialName("entry_uuid") val entryUuid: String,
+    @SerialName("secret_or_url") val secretOrUrl: String,
+    val period: Long? = null,
+    val digits: Int? = null,
+    @SerialName("hash_algorithm") val hashAlgorithm: String? = null,
+)
+
+/** Arguments of `entry_list_current_otps`: the rows on screen, not the whole database. */
+@Serializable
+internal data class CurrentOtpsDto(
+    @SerialName("db_key") val dbKey: String,
+    @SerialName("entry_uuids") val entryUuids: List<String>,
+)
+
+/**
+ * The current code of one entry.
+ *
+ * `ttl` is how long *this* code is still good for, in seconds - the ticking coroutine that asks for
+ * the codes uses it to decide when to ask again.
+ */
+@Serializable
+internal data class EntryOtpTokenDto(
+    @SerialName("entry_uuid") val entryUuid: String,
+    @SerialName("otp_field_name") val otpFieldName: String,
+    val token: String,
+    val ttl: Long,
+    val period: Long,
+)
+
+/** Arguments of `is_valid_otp_url`. */
+@Serializable
+internal data class OtpUrlDto(@SerialName("otp_url") val otpUrl: String)
+
+/** Result of `form_otp_url` - the `otpauth://` url behind a qr code. */
+@Serializable
+internal data class FormedOtpUrlDto(@SerialName("otp_url") val otpUrl: String)
+
+/** Result of `is_valid_otp_url`. Not a failure: the ui asks while the user is still typing. */
+@Serializable
+internal data class OtpUrlValidityDto(val valid: Boolean)
+
 /** An empty json object, for commands that take no arguments. */
 internal val NO_ARGUMENTS: JsonObject = JsonObject(emptyMap())

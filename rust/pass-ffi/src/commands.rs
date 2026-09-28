@@ -83,6 +83,13 @@ commands! {
     DeleteHistoryEntryByIndex => "delete_history_entry_by_index",
     DeleteHistoryEntries => "delete_history_entries",
 
+    // Two factor codes: the tokens a list shows, and the 2fa settings of one entry
+    EntryListCurrentOtps => "entry_list_current_otps",
+    FormOtpUrl => "form_otp_url",
+    IsValidOtpUrl => "is_valid_otp_url",
+    SetEntryOtp => "set_entry_otp",
+    DeleteEntryOtp => "delete_entry_otp",
+
     GeneratePassword => "generate_password",
 }
 

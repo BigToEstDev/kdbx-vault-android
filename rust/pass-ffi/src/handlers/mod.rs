@@ -15,6 +15,7 @@ pub(crate) mod generator;
 pub(crate) mod groups;
 pub(crate) mod history;
 pub(crate) mod lifecycle;
+pub(crate) mod otp;
 
 use serde::de::DeserializeOwned;
 use serde::Serialize;

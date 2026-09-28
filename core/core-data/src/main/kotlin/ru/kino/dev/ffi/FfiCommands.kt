@@ -49,6 +49,13 @@ internal object FfiCommands {
     const val DELETE_HISTORY_ENTRY_BY_INDEX = "delete_history_entry_by_index"
     const val DELETE_HISTORY_ENTRIES = "delete_history_entries"
 
+    // Two factor codes: the tokens a list shows, and the 2fa settings of one entry
+    const val ENTRY_LIST_CURRENT_OTPS = "entry_list_current_otps"
+    const val FORM_OTP_URL = "form_otp_url"
+    const val IS_VALID_OTP_URL = "is_valid_otp_url"
+    const val SET_ENTRY_OTP = "set_entry_otp"
+    const val DELETE_ENTRY_OTP = "delete_entry_otp"
+
     const val GENERATE_PASSWORD = "generate_password"
 
     /** Every name this side knows. Kept in sync with the contract file by the test. */
@@ -82,6 +89,11 @@ internal object FfiCommands {
         HISTORY_ENTRY_BY_INDEX,
         DELETE_HISTORY_ENTRY_BY_INDEX,
         DELETE_HISTORY_ENTRIES,
+        ENTRY_LIST_CURRENT_OTPS,
+        FORM_OTP_URL,
+        IS_VALID_OTP_URL,
+        SET_ENTRY_OTP,
+        DELETE_ENTRY_OTP,
         GENERATE_PASSWORD,
     )
 }

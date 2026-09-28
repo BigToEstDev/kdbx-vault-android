@@ -38,6 +38,8 @@ mod handlers;
 #[cfg(test)]
 mod history_tests;
 mod init;
+#[cfg(test)]
+mod otp_tests;
 mod key_store;
 #[cfg(test)]
 mod lifecycle_tests;

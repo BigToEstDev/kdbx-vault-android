@@ -102,6 +102,17 @@ class FfiContractTest {
         assertKeysMatch(FfiCommands.HISTORY_ENTRY_BY_INDEX, EntryFormDataDto.serializer())
     }
 
+    @Test
+    fun `the current codes are read exactly as the bridge describes them`() {
+        assertKeysMatchList(FfiCommands.ENTRY_LIST_CURRENT_OTPS, EntryOtpTokenDto.serializer())
+    }
+
+    @Test
+    fun `the url of a code and its check are read exactly as the bridge describes them`() {
+        assertKeysMatch(FfiCommands.FORM_OTP_URL, FormedOtpUrlDto.serializer())
+        assertKeysMatch(FfiCommands.IS_VALID_OTP_URL, OtpUrlValidityDto.serializer())
+    }
+
     /**
      * Everything that only reports that it went through answers the same way, and the point of this
      * test is exactly that: one model on this side, and no command quietly growing a payload the app
@@ -124,6 +135,8 @@ class FfiContractTest {
             FfiCommands.REMOVE_ENTRY_PERMANENTLY,
             FfiCommands.DELETE_HISTORY_ENTRY_BY_INDEX,
             FfiCommands.DELETE_HISTORY_ENTRIES,
+            FfiCommands.SET_ENTRY_OTP,
+            FfiCommands.DELETE_ENTRY_OTP,
         ).forEach { command ->
             assertKeysMatch(command, DoneDto.serializer())
         }
