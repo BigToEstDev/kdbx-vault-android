@@ -57,6 +57,8 @@ commands! {
     IsDbOpened => "is_db_opened",
     RenameDbKey => "rename_db_key",
     KdbxContextStatuses => "kdbx_context_statuses",
+    // Follows a biometric prompt that already succeeded on the Android side
+    UnlockKdbxOnBiometricAuthentication => "unlock_kdbx_on_biometric_authentication",
 
     // Groups: the tree the ui draws, one group for its edit screen, and the operations that change it
     GroupsSummaryData => "groups_summary_data",

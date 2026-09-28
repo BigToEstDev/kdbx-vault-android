@@ -316,3 +316,36 @@ fn root_of(db_key: &str) -> String {
         .expect("the tree has to name its root")
         .to_string()
 }
+
+// The biometric prompt is Android's and happens before this command; what it does here is restore
+// the content of a locked database without a password. The test is that the boundary carries it -
+// the strength of the whole thing lives in the Keystore work in front of it, not here
+#[test]
+fn a_locked_database_is_unlocked_after_an_authentication_that_already_happened() {
+    prepare();
+    let db_key = key_of("biometric-unlock");
+
+    run_with_bytes("create_and_write_to_writer", &new_db_args(&db_key), None);
+    run_with_bytes("lock_kdbx", &db_key_args(&db_key), None);
+
+    let unlocked = run_with_bytes(
+        "unlock_kdbx_on_biometric_authentication",
+        &db_key_args(&db_key),
+        None,
+    );
+    assert_shape("unlock_kdbx_on_biometric_authentication", &unlocked.envelope);
+    assert!(
+        unlocked.envelope.contains(r#""database_name":"Test""#),
+        "{}",
+        unlocked.envelope
+    );
+
+    let locked = run_with_bytes("is_db_locked", &db_key_args(&db_key), None);
+    assert!(
+        locked.envelope.contains(r#""locked":false"#),
+        "the database is open again: {}",
+        locked.envelope
+    );
+
+    run_with_bytes("close_kdbx", &db_key_args(&db_key), None);
+}

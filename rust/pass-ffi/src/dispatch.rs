@@ -60,6 +60,9 @@ fn dispatch(command: &str, args_json: &str, input: Option<Vec<u8>>) -> Result<An
         Command::IsDbOpened => lifecycle::is_opened(args_json, input),
         Command::RenameDbKey => lifecycle::rename_db_key(args_json, input),
         Command::KdbxContextStatuses => lifecycle::context_statuses(args_json, input),
+        Command::UnlockKdbxOnBiometricAuthentication => {
+            lifecycle::unlock_on_biometric(args_json, input)
+        }
 
         Command::GroupsSummaryData => groups::groups_summary_data(args_json, input),
         Command::GetGroupById => groups::get_group_by_id(args_json, input),

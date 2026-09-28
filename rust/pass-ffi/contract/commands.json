@@ -50,6 +50,7 @@
   "set_entry_otp",
   "sort_sub_groups",
   "unlock_kdbx",
+  "unlock_kdbx_on_biometric_authentication",
   "update_entry_from_form_data",
   "update_group",
   "verify_db_file_checksum"

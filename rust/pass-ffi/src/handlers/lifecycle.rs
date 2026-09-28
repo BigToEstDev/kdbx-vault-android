@@ -198,6 +198,27 @@ pub(crate) fn rename_db_key(
     json_answer(&loaded)
 }
 
+/// Unlocks the database without asking for the password, on the strength of an authentication that
+/// already happened on the Android side.
+///
+/// The check is not here and cannot be: the biometric prompt is Android's, and what it guards is the
+/// key in the Android Keystore. This command is what follows a prompt that has already succeeded -
+/// it restores the decrypted content, nothing more. So it is only ever as safe as the Keystore work
+/// in front of it, which is why the two belong together (decision 5 of Step 23) and why the in
+/// memory key store of today is not the end of it.
+pub(crate) fn unlock_on_biometric(
+    args_json: &str,
+    input: Option<Vec<u8>>,
+) -> Result<Answer, ErrorPayload> {
+    reject_bytes(Command::UnlockKdbxOnBiometricAuthentication, input)?;
+    let args: DbKeyArgs = args(args_json)?;
+
+    let loaded = db_service::unlock_kdbx_on_biometric_authentication(&args.db_key)
+        .map_err(|e| ErrorPayload::of(&e))?;
+
+    json_answer(&loaded)
+}
+
 /// When the database was last read and written, and whether it has edits that are not in the file.
 ///
 /// `save_pending` is the only way to know there is something to save, so it is what an "unsaved

@@ -42,6 +42,7 @@ class FfiContractTest {
     fun `an unlocked database is read as an opened one`() {
         assertKeysMatch(FfiCommands.UNLOCK_DATABASE, KdbxLoadedDto.serializer())
         assertKeysMatch(FfiCommands.RENAME_DB_KEY, KdbxLoadedDto.serializer())
+        assertKeysMatch(FfiCommands.UNLOCK_ON_BIOMETRIC, KdbxLoadedDto.serializer())
     }
 
     @Test
