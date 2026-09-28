@@ -65,6 +65,18 @@ commands! {
     MoveGroupToRecycleBin => "move_group_to_recycle_bin",
     RemoveGroupPermanently => "remove_group_permanently",
 
+    // Entries: the list of a category, the form behind one entry, and what changes it
+    EntrySummaryData => "entry_summary_data",
+    GetEntryFormDataById => "get_entry_form_data_by_id",
+    EntryKeyValueFields => "entry_key_value_fields",
+    NewEntryFormDataById => "new_entry_form_data_by_id",
+    InsertEntryFromFormData => "insert_entry_from_form_data",
+    UpdateEntryFromFormData => "update_entry_from_form_data",
+    MoveEntry => "move_entry",
+    CloneEntry => "clone_entry",
+    MoveEntryToRecycleBin => "move_entry_to_recycle_bin",
+    RemoveEntryPermanently => "remove_entry_permanently",
+
     GeneratePassword => "generate_password",
 }
 

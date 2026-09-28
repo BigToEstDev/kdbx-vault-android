@@ -31,6 +31,8 @@ mod dispatch;
 mod errors;
 mod frame;
 #[cfg(test)]
+mod entry_tests;
+#[cfg(test)]
 mod group_tests;
 mod handlers;
 mod init;

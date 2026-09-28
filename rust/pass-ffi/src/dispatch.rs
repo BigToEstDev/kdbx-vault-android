@@ -11,7 +11,7 @@
 
 use crate::commands::Command;
 use crate::errors::{err_envelope, ErrorPayload};
-use crate::handlers::{generator, groups, lifecycle};
+use crate::handlers::{entries, generator, groups, lifecycle};
 
 /// What a command answers: the envelope always, and raw bytes when the command produces a file - the
 /// bytes of a database on save. Kept apart from the envelope on purpose, so a database never has to be
@@ -64,6 +64,17 @@ fn dispatch(command: &str, args_json: &str, input: Option<Vec<u8>>) -> Result<An
         Command::CloneGroup => groups::clone_group(args_json, input),
         Command::MoveGroupToRecycleBin => groups::move_group_to_recycle_bin(args_json, input),
         Command::RemoveGroupPermanently => groups::remove_group_permanently(args_json, input),
+
+        Command::EntrySummaryData => entries::entry_summary_data(args_json, input),
+        Command::GetEntryFormDataById => entries::get_entry_form_data_by_id(args_json, input),
+        Command::EntryKeyValueFields => entries::entry_key_value_fields(args_json, input),
+        Command::NewEntryFormDataById => entries::new_entry_form_data_by_id(args_json, input),
+        Command::InsertEntryFromFormData => entries::insert_entry_from_form_data(args_json, input),
+        Command::UpdateEntryFromFormData => entries::update_entry_from_form_data(args_json, input),
+        Command::MoveEntry => entries::move_entry(args_json, input),
+        Command::CloneEntry => entries::clone_entry(args_json, input),
+        Command::MoveEntryToRecycleBin => entries::move_entry_to_recycle_bin(args_json, input),
+        Command::RemoveEntryPermanently => entries::remove_entry_permanently(args_json, input),
 
         Command::GeneratePassword => generator::generate_password(args_json, input),
     }

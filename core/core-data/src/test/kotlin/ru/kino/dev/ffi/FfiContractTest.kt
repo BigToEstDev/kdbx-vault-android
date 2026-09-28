@@ -3,6 +3,7 @@ package ru.kino.dev.ffi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -60,6 +61,37 @@ class FfiContractTest {
         assertKeysMatch(FfiCommands.CLONE_GROUP, ClonedGroupDto.serializer())
     }
 
+    @Test
+    fun `an entry form is read exactly as the bridge describes it`() {
+        assertKeysMatch(FfiCommands.GET_ENTRY_FORM_DATA_BY_ID, EntryFormDataDto.serializer())
+        assertKeysMatch(FfiCommands.NEW_ENTRY_FORM_DATA_BY_ID, EntryFormDataDto.serializer())
+    }
+
+    @Test
+    fun `the entries of a category are read exactly as the bridge describes them`() {
+        assertKeysMatchList(FfiCommands.ENTRY_SUMMARY_DATA, EntrySummaryDto.serializer())
+    }
+
+    @Test
+    fun `a cloned entry answers with the uuid of the copy`() {
+        assertKeysMatch(FfiCommands.CLONE_ENTRY, ClonedEntryDto.serializer())
+    }
+
+    /**
+     * The fields of an entry are a map whose keys are *data*: the entry type names them, and the user
+     * adds his own. There is no model to compare against, so what is pinned is the only promise there
+     * is - an object of strings, which is what `Map<String, String>` decodes.
+     */
+    @Test
+    fun `the fields of an entry stay a map of strings`() {
+        val shape = Json
+            .parseToJsonElement(contractFile(FfiCommands.ENTRY_KEY_VALUE_FIELDS).readText())
+            .let { it as JsonObject }
+
+        assertEquals(setOf("<key>"), shape.keys)
+        assertEquals("\"string\"", shape.getValue("<key>").toString())
+    }
+
     /**
      * Everything that only reports that it went through answers the same way, and the point of this
      * test is exactly that: one model on this side, and no command quietly growing a payload the app
@@ -75,9 +107,30 @@ class FfiContractTest {
             FfiCommands.SORT_SUB_GROUPS,
             FfiCommands.MOVE_GROUP_TO_RECYCLE_BIN,
             FfiCommands.REMOVE_GROUP_PERMANENTLY,
+            FfiCommands.INSERT_ENTRY_FROM_FORM_DATA,
+            FfiCommands.UPDATE_ENTRY_FROM_FORM_DATA,
+            FfiCommands.MOVE_ENTRY,
+            FfiCommands.MOVE_ENTRY_TO_RECYCLE_BIN,
+            FfiCommands.REMOVE_ENTRY_PERMANENTLY,
         ).forEach { command ->
             assertKeysMatch(command, DoneDto.serializer())
         }
+    }
+
+    /** The same as [assertKeysMatch], for an answer that is a list - its first element is the shape. */
+    private fun assertKeysMatchList(command: String, serializer: KSerializer<*>) {
+        val fromContract = Json
+            .parseToJsonElement(contractFile(command).readText())
+            .let { it as JsonArray }
+            .first()
+            .let { it as JsonObject }
+            .keys
+
+        val fromModel = with(serializer.descriptor) {
+            (0 until elementsCount).map { getElementName(it) }.toSet()
+        }
+
+        assertEquals("the model of '$command' does not match the contract", fromContract, fromModel)
     }
 
     @Test

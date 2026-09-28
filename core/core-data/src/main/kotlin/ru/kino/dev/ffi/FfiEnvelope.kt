@@ -269,5 +269,165 @@ internal data class CloneGroupDto(
 @Serializable
 internal data class ClonedGroupDto(@SerialName("group_uuid") val groupUuid: String)
 
+/** Arguments naming one entry of an open database. */
+@Serializable
+internal data class EntryIdDto(
+    @SerialName("db_key") val dbKey: String,
+    @SerialName("entry_uuid") val entryUuid: String,
+)
+
+/**
+ * An entry as a form, exactly as the core has it - the same arrangement as [GroupDto] and for the same
+ * reason: `insert_entry_from_form_data` and `update_entry_from_form_data` take the whole form back.
+ *
+ * Two names of the core show through and stop here, in this module: `group_uuid` means the *parent
+ * group* (a TODO of the upstream), and `parsed_fields` is answer-only - the core ignores it on the way
+ * back, and it is kept so the form can be sent in unchanged.
+ */
+@Serializable
+internal data class EntryFormDataDto(
+    val uuid: String,
+    @SerialName("group_uuid") val parentGroupUuid: String,
+    @SerialName("icon_id") val iconId: Int,
+    @SerialName("custom_icon_uuid") val customIconUuid: String? = null,
+    @SerialName("last_modification_time") val lastModificationTime: String,
+    @SerialName("creation_time") val creationTime: String,
+    @SerialName("last_access_time") val lastAccessTime: String,
+    val expires: Boolean,
+    @SerialName("expiry_time") val expiryTime: String,
+    val tags: List<String> = emptyList(),
+    @SerialName("binary_key_values") val binaryKeyValues: List<BinaryKeyValueDto> = emptyList(),
+    @SerialName("history_count") val historyCount: Int,
+    @SerialName("entry_type_name") val entryTypeName: String,
+    @SerialName("entry_type_uuid") val entryTypeUuid: String,
+    @SerialName("entry_type_icon_name") val entryTypeIconName: String? = null,
+    val title: String,
+    val notes: String,
+    @SerialName("standard_section_names") val standardSectionNames: List<String> = emptyList(),
+    @SerialName("section_names") val sectionNames: List<String> = emptyList(),
+    @SerialName("section_fields") val sectionFields: Map<String, List<KeyValueDataDto>> = emptyMap(),
+    @SerialName("auto_type") val autoType: AutoTypeDto,
+    @SerialName("parsed_fields") val parsedFields: Map<String, String> = emptyMap(),
+)
+
+/**
+ * One field of an entry form.
+ *
+ * `password_score` and `current_opt_token` stay [JsonElement]: both are tagged enums of the core whose
+ * only use is being shown, and modelling them here would mean a second dictionary to keep in step for
+ * no gain. They travel through untouched.
+ */
+@Serializable
+internal data class KeyValueDataDto(
+    val key: String,
+    val value: String? = null,
+    val protected: Boolean,
+    val required: Boolean,
+    @SerialName("helper_text") val helperText: String? = null,
+    @SerialName("data_type") val dataType: String,
+    @SerialName("standard_field") val standardField: Boolean,
+    @SerialName("select_field_options") val selectFieldOptions: List<String>? = null,
+    @SerialName("password_score") val passwordScore: JsonElement? = null,
+    @SerialName("current_opt_token") val currentOtpToken: JsonElement? = null,
+)
+
+/** An attachment of an entry. Attachments are not in v1; the field is carried so a form round trips. */
+@Serializable
+internal data class BinaryKeyValueDto(
+    val key: String,
+    val value: String,
+    @SerialName("index_ref") val indexRef: Int,
+    @SerialName("data_hash") val dataHash: String,
+    @SerialName("data_size") val dataSize: Long,
+)
+
+/** Auto type settings of an entry. Not edited by this app - kept as read so saving does not lose it. */
+@Serializable
+internal data class AutoTypeDto(
+    val enabled: Boolean,
+    @SerialName("default_sequence") val defaultSequence: String? = null,
+    val associations: List<AssociationDto> = emptyList(),
+    @SerialName("data_transfer_obfuscation") val dataTransferObfuscation: Int = 0,
+)
+
+@Serializable
+internal data class AssociationDto(
+    val window: String,
+    @SerialName("key_stroke_sequence") val keyStrokeSequence: String? = null,
+)
+
+/** An entry as a list shows it. */
+@Serializable
+internal data class EntrySummaryDto(
+    val uuid: String,
+    @SerialName("parent_group_uuid") val parentGroupUuid: String,
+    val title: String? = null,
+    @SerialName("secondary_title") val secondaryTitle: String? = null,
+    @SerialName("entry_type_name") val entryTypeName: String,
+    @SerialName("entry_type_uuid") val entryTypeUuid: String,
+    @SerialName("icon_id") val iconId: Int,
+    @SerialName("custom_icon_uuid") val customIconUuid: String? = null,
+    @SerialName("history_index") val historyIndex: Int? = null,
+    @SerialName("modified_time") val modifiedTime: Long? = null,
+    @SerialName("created_time") val createdTime: Long? = null,
+)
+
+/** Arguments of `insert_entry_from_form_data` and `update_entry_from_form_data`. */
+@Serializable
+internal data class EntryFormArgsDto(
+    @SerialName("db_key") val dbKey: String,
+    @SerialName("form_data") val formData: EntryFormDataDto,
+)
+
+/**
+ * Which entries to list.
+ *
+ * The bridge spells it `{"kind": "all_entries"}` or `{"kind": "group", "value": "…"}`, snake_case and
+ * internally tagged - the core's own `camelCase`, externally tagged enum never reaches this side.
+ */
+@Serializable
+internal data class EntryCategoryDto(
+    val kind: String,
+    val value: String? = null,
+)
+
+/** Arguments of `entry_summary_data`. */
+@Serializable
+internal data class EntrySummaryArgsDto(
+    @SerialName("db_key") val dbKey: String,
+    val category: EntryCategoryDto,
+)
+
+/** Arguments of `new_entry_form_data_by_id`. */
+@Serializable
+internal data class NewEntryFormDto(
+    @SerialName("db_key") val dbKey: String,
+    @SerialName("entry_type_uuid") val entryTypeUuid: String,
+    @SerialName("parent_group_uuid") val parentGroupUuid: String? = null,
+)
+
+/** Arguments of `move_entry`. */
+@Serializable
+internal data class MoveEntryDto(
+    @SerialName("db_key") val dbKey: String,
+    @SerialName("entry_uuid") val entryUuid: String,
+    @SerialName("new_parent_uuid") val newParentUuid: String,
+)
+
+/** Arguments of `clone_entry` - the four answers of the "duplicate" dialog, flat. */
+@Serializable
+internal data class CloneEntryDto(
+    @SerialName("db_key") val dbKey: String,
+    @SerialName("entry_uuid") val entryUuid: String,
+    @SerialName("new_title") val newTitle: String? = null,
+    @SerialName("parent_group_uuid") val parentGroupUuid: String,
+    @SerialName("keep_histories") val keepHistories: Boolean,
+    @SerialName("link_by_reference") val linkByReference: Boolean,
+)
+
+/** Result of `clone_entry`: the uuid of the copy. */
+@Serializable
+internal data class ClonedEntryDto(@SerialName("entry_uuid") val entryUuid: String)
+
 /** An empty json object, for commands that take no arguments. */
 internal val NO_ARGUMENTS: JsonObject = JsonObject(emptyMap())

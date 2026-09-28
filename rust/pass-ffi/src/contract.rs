@@ -41,6 +41,30 @@ pub(crate) fn shape(value: &Value) -> Value {
     }
 }
 
+/// The key a map whose keys are data - the fields of an entry, by name - gets in the shape.
+const DATA_KEY: &str = "<key>";
+
+/// The same as [`assert_shape`], for an answer that is a map whose keys are *data* rather than a
+/// contract: the fields of an entry are named by the entry type and by whatever the user added.
+///
+/// Pinning those names would make the file a copy of the test fixture and would break as soon as the
+/// fixture changed, so every key collapses into `<key>` and what stays pinned is the only promise
+/// there is: the answer is an object of that value type.
+pub(crate) fn assert_shape_of_map(command: &str, envelope: &str) {
+    let ok = ok_of(command, envelope);
+    let map = ok
+        .as_object()
+        .unwrap_or_else(|| panic!("the answer of {} is not an object: {}", command, envelope));
+
+    let collapsed: Value = Value::Object(
+        map.iter()
+            .map(|(_, value)| (DATA_KEY.to_string(), shape(value)))
+            .collect(),
+    );
+
+    compare(command, &collapsed);
+}
+
 fn normalise_key(key: &str) -> String {
     match uuid::Uuid::parse_str(key) {
         Ok(_) => UUID_KEY.to_string(),
@@ -48,14 +72,20 @@ fn normalise_key(key: &str) -> String {
     }
 }
 
-/// Compares the `ok` payload of an envelope with `contract/<command>.json`.
-pub(crate) fn assert_shape(command: &str, envelope: &str) {
+/// The `ok` payload, or a failure naming the command - an `err` here means the test set the call up
+/// wrongly, and the message has to say which call.
+fn ok_of(command: &str, envelope: &str) -> Value {
     let parsed: Value = serde_json::from_str(envelope).expect("the envelope is not json");
-    let ok = parsed
-        .get("ok")
-        .unwrap_or_else(|| panic!("the answer of {} carries no 'ok': {}", command, envelope));
 
-    let expected = serde_json::to_string_pretty(&shape(ok)).unwrap() + "\n";
+    parsed
+        .get("ok")
+        .unwrap_or_else(|| panic!("the answer of {} carries no 'ok': {}", command, envelope))
+        .clone()
+}
+
+/// Writes or checks `contract/<command>.json` against a shape already built.
+fn compare(command: &str, shape: &Value) {
+    let expected = serde_json::to_string_pretty(shape).unwrap() + "\n";
     let path = format!("{}/contract/{}.json", env!("CARGO_MANIFEST_DIR"), command);
 
     if std::env::var("UPDATE_CONTRACT").is_ok() {
@@ -68,6 +98,13 @@ pub(crate) fn assert_shape(command: &str, envelope: &str) {
         "the shape of {} changed; check the diff, rerun with UPDATE_CONTRACT=1 and update the Kotlin model",
         command
     );
+}
+
+/// Compares the `ok` payload of an envelope with `contract/<command>.json`.
+pub(crate) fn assert_shape(command: &str, envelope: &str) {
+    let ok = ok_of(command, envelope);
+
+    compare(command, &shape(&ok));
 }
 
 #[cfg(test)]
