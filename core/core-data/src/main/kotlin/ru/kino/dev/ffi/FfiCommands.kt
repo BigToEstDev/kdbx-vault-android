@@ -71,6 +71,13 @@ internal object FfiCommands {
     const val SET_DB_SETTINGS = "set_db_settings"
     const val GENERATE_KEY_FILE = "generate_key_file"
 
+    // Has the file changed under us, and merging it back in when it has. All but one carry the bytes
+    // of the file on disk, so they go through invokeBinary
+    const val VERIFY_DB_FILE_CHECKSUM = "verify_db_file_checksum"
+    const val SET_DB_FILE_CHECKSUM = "calculate_and_set_db_file_checksum"
+    const val DB_CHECKSUM_HASH = "db_checksum_hash"
+    const val MERGE_DATABASE = "merge_kdbx_with_reader"
+
     const val GENERATE_PASSWORD = "generate_password"
 
     /** Every name this side knows. Kept in sync with the contract file by the test. */
@@ -120,6 +127,10 @@ internal object FfiCommands {
         GET_DB_SETTINGS,
         SET_DB_SETTINGS,
         GENERATE_KEY_FILE,
+        VERIFY_DB_FILE_CHECKSUM,
+        SET_DB_FILE_CHECKSUM,
+        DB_CHECKSUM_HASH,
+        MERGE_DATABASE,
         GENERATE_PASSWORD,
     )
 }

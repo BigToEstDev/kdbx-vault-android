@@ -1,9 +1,11 @@
 [
+  "calculate_and_set_db_file_checksum",
   "clone_entry",
   "clone_group",
   "close_kdbx",
   "collect_entry_group_tags",
   "create_and_write_to_writer",
+  "db_checksum_hash",
   "delete_entry_otp",
   "delete_history_entries",
   "delete_history_entry_by_index",
@@ -26,6 +28,7 @@
   "is_valid_otp_url",
   "kdbx_context_statuses",
   "lock_kdbx",
+  "merge_kdbx_with_reader",
   "move_entry",
   "move_entry_to_recycle_bin",
   "move_group",
@@ -44,5 +47,6 @@
   "sort_sub_groups",
   "unlock_kdbx",
   "update_entry_from_form_data",
-  "update_group"
+  "update_group",
+  "verify_db_file_checksum"
 ]

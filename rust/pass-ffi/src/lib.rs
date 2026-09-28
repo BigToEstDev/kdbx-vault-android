@@ -37,6 +37,8 @@ mod group_tests;
 mod handlers;
 #[cfg(test)]
 mod history_tests;
+#[cfg(test)]
+mod integrity_tests;
 mod init;
 #[cfg(test)]
 mod otp_tests;

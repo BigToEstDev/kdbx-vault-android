@@ -635,5 +635,57 @@ internal data class GenerateKeyFileDto(
     @SerialName("key_file_name") val keyFileName: String,
 )
 
+/**
+ * The checksum the core holds for a database file, as the bytes it is.
+ *
+ * Not hex: the app only hands it back or compares it, and an encoding would be one more thing for
+ * both sides to agree on.
+ */
+@Serializable
+internal data class ChecksumDto(val checksum: List<Int> = emptyList())
+
+/**
+ * What a merge changed.
+ *
+ * There is no undo: the merge changes the database in memory at once, and [differentDatabases] is
+ * only known afterwards - so a warning about merging two unrelated databases is shown as a fact, and
+ * "cancel" there means closing without saving. The file itself is untouched, because this side is
+ * what writes it.
+ */
+@Serializable
+internal data class MergeResultDto(
+    @SerialName("added_groups") val addedGroups: List<MergedGroupDto> = emptyList(),
+    @SerialName("updated_groups") val updatedGroups: List<MergedGroupDto> = emptyList(),
+    @SerialName("parent_changed_groups") val parentChangedGroups: List<MergedGroupDto> = emptyList(),
+    @SerialName("added_entries") val addedEntries: List<MergedEntryDto> = emptyList(),
+    @SerialName("updated_entries") val updatedEntries: List<MergedEntryDto> = emptyList(),
+    @SerialName("parent_changed_entries") val parentChangedEntries: List<MergedEntryDto> = emptyList(),
+    @SerialName("permanently_deleted_entries")
+    val permanentlyDeletedEntries: List<MergedEntryDto> = emptyList(),
+    @SerialName("permanently_deleted_groups")
+    val permanentlyDeletedGroups: List<MergedGroupDto> = emptyList(),
+    @SerialName("meta_data_changed") val metaDataChanged: Boolean,
+    @SerialName("merge_done") val mergeDone: Boolean,
+    @SerialName("different_databases") val differentDatabases: Boolean,
+)
+
+/** A group a merge touched, named well enough to list it. */
+@Serializable
+internal data class MergedGroupDto(
+    val uuid: String,
+    val name: String,
+    @SerialName("parent_group_uuid") val parentGroupUuid: String? = null,
+    @SerialName("previous_parent_group_uuid") val previousParentGroupUuid: String? = null,
+)
+
+/** An entry a merge touched. */
+@Serializable
+internal data class MergedEntryDto(
+    val uuid: String,
+    val name: String,
+    @SerialName("parent_group_uuid") val parentGroupUuid: String? = null,
+    @SerialName("previous_parent_group_uuid") val previousParentGroupUuid: String? = null,
+)
+
 /** An empty json object, for commands that take no arguments. */
 internal val NO_ARGUMENTS: JsonObject = JsonObject(emptyMap())

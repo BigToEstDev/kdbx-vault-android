@@ -137,6 +137,12 @@ class FfiContractTest {
         assertKeysMatch(FfiCommands.GET_DB_SETTINGS, DbSettingsDto.serializer())
     }
 
+    @Test
+    fun `the checksum and the result of a merge are read exactly as the bridge describes them`() {
+        assertKeysMatch(FfiCommands.DB_CHECKSUM_HASH, ChecksumDto.serializer())
+        assertKeysMatch(FfiCommands.MERGE_DATABASE, MergeResultDto.serializer())
+    }
+
     /**
      * Everything that only reports that it went through answers the same way, and the point of this
      * test is exactly that: one model on this side, and no command quietly growing a payload the app
@@ -161,6 +167,8 @@ class FfiContractTest {
             FfiCommands.DELETE_HISTORY_ENTRY_BY_INDEX,
             FfiCommands.DELETE_HISTORY_ENTRIES,
             FfiCommands.SET_DB_SETTINGS,
+            FfiCommands.VERIFY_DB_FILE_CHECKSUM,
+            FfiCommands.SET_DB_FILE_CHECKSUM,
             FfiCommands.GENERATE_KEY_FILE,
             FfiCommands.SET_ENTRY_OTP,
             FfiCommands.DELETE_ENTRY_OTP,

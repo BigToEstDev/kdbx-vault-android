@@ -105,6 +105,13 @@ commands! {
     SetDbSettings => "set_db_settings",
     GenerateKeyFile => "generate_key_file",
 
+    // Has the file changed under us, and merging it back in when it has. All but one carry the bytes
+    // of the file on disk
+    VerifyDbFileChecksum => "verify_db_file_checksum",
+    CalculateAndSetDbFileChecksum => "calculate_and_set_db_file_checksum",
+    DbChecksumHash => "db_checksum_hash",
+    MergeKdbxWithReader => "merge_kdbx_with_reader",
+
     GeneratePassword => "generate_password",
 }
 
