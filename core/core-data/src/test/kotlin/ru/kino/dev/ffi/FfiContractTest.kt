@@ -132,6 +132,11 @@ class FfiContractTest {
         assertKeysMatch(FfiCommands.COLLECT_ENTRY_GROUP_TAGS, AllTagsDto.serializer())
     }
 
+    @Test
+    fun `the settings of a database are read exactly as the bridge describes them`() {
+        assertKeysMatch(FfiCommands.GET_DB_SETTINGS, DbSettingsDto.serializer())
+    }
+
     /**
      * Everything that only reports that it went through answers the same way, and the point of this
      * test is exactly that: one model on this side, and no command quietly growing a payload the app
@@ -155,6 +160,8 @@ class FfiContractTest {
             FfiCommands.REMOVE_ENTRY_PERMANENTLY,
             FfiCommands.DELETE_HISTORY_ENTRY_BY_INDEX,
             FfiCommands.DELETE_HISTORY_ENTRIES,
+            FfiCommands.SET_DB_SETTINGS,
+            FfiCommands.GENERATE_KEY_FILE,
             FfiCommands.SET_ENTRY_OTP,
             FfiCommands.DELETE_ENTRY_OTP,
         ).forEach { command ->

@@ -100,6 +100,11 @@ commands! {
     SearchTerm => "search_term",
     CollectEntryGroupTags => "collect_entry_group_tags",
 
+    // The settings of a database, and the key file the core writes by path
+    GetDbSettings => "get_db_settings",
+    SetDbSettings => "set_db_settings",
+    GenerateKeyFile => "generate_key_file",
+
     GeneratePassword => "generate_password",
 }
 

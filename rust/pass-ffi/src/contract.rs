@@ -83,10 +83,21 @@ fn ok_of(command: &str, envelope: &str) -> Value {
         .clone()
 }
 
+/// Serialises access to the files.
+///
+/// Several tests legitimately go through the same command - every test that needs an entry inserts
+/// one - and cargo runs them in parallel. With UPDATE_CONTRACT one of them can then read a file while
+/// another is writing it, and see it half written. The lock is around write *and* read, so a file is
+/// never observed between the two.
+static FILES: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 /// Writes or checks `contract/<command>.json` against a shape already built.
 fn compare(command: &str, shape: &Value) {
     let expected = serde_json::to_string_pretty(shape).unwrap() + "\n";
     let path = format!("{}/contract/{}.json", env!("CARGO_MANIFEST_DIR"), command);
+
+    // A poisoned lock means another test already failed; its own panic is the one worth reading
+    let _guard = FILES.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
 
     if std::env::var("UPDATE_CONTRACT").is_ok() {
         std::fs::write(&path, &expected).unwrap();

@@ -569,5 +569,71 @@ internal data class ContextStatusesDto(
     @SerialName("save_pending") val savePending: Boolean,
 )
 
+/**
+ * The settings of a database, exactly as the core has them.
+ *
+ * The fourth and last core type that travels both ways: `set_db_settings` takes the whole thing back.
+ * It is also how the credentials are changed - `password_changed` / `key_file_changed` beside the new
+ * values - so the screen reads the settings, edits them and sends them in. Editing them changes the
+ * database in memory; the file gets it on the next save.
+ */
+@Serializable
+internal data class DbSettingsDto(
+    val kdf: KdfSettingsDto,
+    @SerialName("cipher_id") val cipherId: String,
+    val password: String? = null,
+    @SerialName("key_file_name") val keyFileName: String? = null,
+    @SerialName("password_used") val passwordUsed: Boolean,
+    @SerialName("key_file_used") val keyFileUsed: Boolean,
+    @SerialName("password_changed") val passwordChanged: Boolean,
+    @SerialName("key_file_changed") val keyFileChanged: Boolean,
+    @SerialName("key_file_name_part") val keyFileNamePart: String? = null,
+    @SerialName("database_file_name") val databaseFileName: String,
+    val meta: DbMetaDto,
+)
+
+/**
+ * The key derivation of an existing database.
+ *
+ * Not [KdfDto], which is what *creating* one takes: there the salt is passed and generated, here the
+ * core answers with the version of the algorithm instead.
+ */
+@Serializable
+internal data class KdfSettingsDto(
+    val algorithm: String,
+    val memory: Long,
+    val iterations: Long,
+    val parallelism: Int,
+    val version: Int,
+)
+
+/** The metadata of a database - what a settings screen shows and edits. */
+@Serializable
+internal data class DbMetaDto(
+    @SerialName("database_name") val databaseName: String,
+    @SerialName("database_description") val databaseDescription: String,
+    @SerialName("history_max_items") val historyMaxItems: Int,
+    @SerialName("history_max_size") val historyMaxSize: Long,
+)
+
+/** Arguments of `set_db_settings`. */
+@Serializable
+internal data class SetDbSettingsDto(
+    @SerialName("db_key") val dbKey: String,
+    val settings: DbSettingsDto,
+)
+
+/**
+ * Arguments of `generate_key_file`.
+ *
+ * A path inside the app's own storage, never a SAF uri: the core reads and writes key files itself.
+ * An existing file is not replaced - the answer is the kind `AlreadyExists`, and asking "replace it?"
+ * is this side's job.
+ */
+@Serializable
+internal data class GenerateKeyFileDto(
+    @SerialName("key_file_name") val keyFileName: String,
+)
+
 /** An empty json object, for commands that take no arguments. */
 internal val NO_ARGUMENTS: JsonObject = JsonObject(emptyMap())

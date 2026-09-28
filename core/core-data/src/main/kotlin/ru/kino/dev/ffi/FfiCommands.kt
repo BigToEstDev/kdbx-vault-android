@@ -66,6 +66,11 @@ internal object FfiCommands {
     const val SEARCH_TERM = "search_term"
     const val COLLECT_ENTRY_GROUP_TAGS = "collect_entry_group_tags"
 
+    // The settings of a database, and the key file the core writes by path
+    const val GET_DB_SETTINGS = "get_db_settings"
+    const val SET_DB_SETTINGS = "set_db_settings"
+    const val GENERATE_KEY_FILE = "generate_key_file"
+
     const val GENERATE_PASSWORD = "generate_password"
 
     /** Every name this side knows. Kept in sync with the contract file by the test. */
@@ -112,6 +117,9 @@ internal object FfiCommands {
         DELETE_ENTRY_OTP,
         SEARCH_TERM,
         COLLECT_ENTRY_GROUP_TAGS,
+        GET_DB_SETTINGS,
+        SET_DB_SETTINGS,
+        GENERATE_KEY_FILE,
         GENERATE_PASSWORD,
     )
 }
