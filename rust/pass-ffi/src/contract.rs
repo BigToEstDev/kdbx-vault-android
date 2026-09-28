@@ -104,11 +104,20 @@ fn compare(command: &str, shape: &Value) {
     }
 
     let actual = std::fs::read_to_string(&path).unwrap_or_default();
+
+    // Line endings are not part of the contract: git hands the file over with crlf on a machine with
+    // core.autocrlf, and the shape is the same shape either way. Comparing the bytes would mean these
+    // tests pass or fail depending on how the repository was checked out
     assert_eq!(
-        actual, expected,
+        normalise_line_endings(&actual),
+        normalise_line_endings(&expected),
         "the shape of {} changed; check the diff, rerun with UPDATE_CONTRACT=1 and update the Kotlin model",
         command
     );
+}
+
+fn normalise_line_endings(text: &str) -> String {
+    text.replace("\r\n", "\n")
 }
 
 /// Compares the `ok` payload of an envelope with `contract/<command>.json`.

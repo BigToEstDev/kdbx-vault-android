@@ -1,0 +1,5 @@
+# The contract files are written by a Rust test and read by a Kotlin one, on whatever machine runs
+# them. Without this, git hands them over as crlf where core.autocrlf is on, the test rewrites them as
+# lf, and every regeneration shows up as a diff of the whole file. The tests ignore line endings
+# themselves, but there is no reason for the working tree to keep flipping.
+rust/pass-ffi/contract/*.json text eol=lf
