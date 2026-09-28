@@ -528,5 +528,46 @@ internal data class AllTagsDto(
     @SerialName("group_tags") val groupTags: List<String> = emptyList(),
 )
 
+/** Arguments of `unlock_kdbx` - the same credentials as opening, checked against the stored key. */
+@Serializable
+internal data class UnlockDto(
+    @SerialName("db_key") val dbKey: String,
+    val password: String?,
+    @SerialName("key_file_name") val keyFileName: String?,
+)
+
+/** Arguments of `rename_db_key`: the file moved, or "save as" wrote it somewhere else. */
+@Serializable
+internal data class RenameDbKeyDto(
+    @SerialName("old_db_key") val oldDbKey: String,
+    @SerialName("new_db_key") val newDbKey: String,
+)
+
+/** Result of `is_db_locked`. */
+@Serializable
+internal data class LockedDto(val locked: Boolean)
+
+/**
+ * Result of `is_db_opened`.
+ *
+ * The one question about a database that cannot fail: one that is not open answers `false` instead of
+ * `DbKeyNotFound`, which is the point - it is asked about a uri from the recent list after the process
+ * was killed, when the core may hold nothing at all.
+ */
+@Serializable
+internal data class OpenedDto(val opened: Boolean)
+
+/**
+ * When the database was last read and written, and whether it holds edits the file does not.
+ *
+ * `save_pending` is what an "unsaved changes" prompt and the save on going to the background read.
+ */
+@Serializable
+internal data class ContextStatusesDto(
+    @SerialName("last_read_time") val lastReadTime: String? = null,
+    @SerialName("last_write_time") val lastWriteTime: String? = null,
+    @SerialName("save_pending") val savePending: Boolean,
+)
+
 /** An empty json object, for commands that take no arguments. */
 internal val NO_ARGUMENTS: JsonObject = JsonObject(emptyMap())

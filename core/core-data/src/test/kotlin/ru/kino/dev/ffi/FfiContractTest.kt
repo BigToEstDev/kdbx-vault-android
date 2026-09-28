@@ -39,6 +39,19 @@ class FfiContractTest {
     }
 
     @Test
+    fun `an unlocked database is read as an opened one`() {
+        assertKeysMatch(FfiCommands.UNLOCK_DATABASE, KdbxLoadedDto.serializer())
+        assertKeysMatch(FfiCommands.RENAME_DB_KEY, KdbxLoadedDto.serializer())
+    }
+
+    @Test
+    fun `the state of a database is read exactly as the bridge describes it`() {
+        assertKeysMatch(FfiCommands.IS_DATABASE_LOCKED, LockedDto.serializer())
+        assertKeysMatch(FfiCommands.IS_DATABASE_OPENED, OpenedDto.serializer())
+        assertKeysMatch(FfiCommands.CONTEXT_STATUSES, ContextStatusesDto.serializer())
+    }
+
+    @Test
     fun `the tree of groups is read exactly as the bridge describes it`() {
         assertKeysMatch(FfiCommands.GROUPS_SUMMARY_DATA, GroupTreeDto.serializer())
     }
@@ -128,6 +141,7 @@ class FfiContractTest {
     fun `commands that change something and report nothing all answer alike`() {
         listOf(
             FfiCommands.CLOSE_DATABASE,
+            FfiCommands.LOCK_DATABASE,
             FfiCommands.INSERT_GROUP,
             FfiCommands.UPDATE_GROUP,
             FfiCommands.MOVE_GROUP,

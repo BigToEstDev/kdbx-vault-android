@@ -17,6 +17,12 @@ internal object FfiCommands {
     const val READ_DATABASE = "read_kdbx"
     const val SAVE_DATABASE = "save_kdbx_to_writer"
     const val CLOSE_DATABASE = "close_kdbx"
+    const val LOCK_DATABASE = "lock_kdbx"
+    const val UNLOCK_DATABASE = "unlock_kdbx"
+    const val IS_DATABASE_LOCKED = "is_db_locked"
+    const val IS_DATABASE_OPENED = "is_db_opened"
+    const val RENAME_DB_KEY = "rename_db_key"
+    const val CONTEXT_STATUSES = "kdbx_context_statuses"
 
     // Groups: the tree the ui draws, one group for its edit screen, and the operations that change it
     const val GROUPS_SUMMARY_DATA = "groups_summary_data"
@@ -68,6 +74,12 @@ internal object FfiCommands {
         READ_DATABASE,
         SAVE_DATABASE,
         CLOSE_DATABASE,
+        LOCK_DATABASE,
+        UNLOCK_DATABASE,
+        IS_DATABASE_LOCKED,
+        IS_DATABASE_OPENED,
+        RENAME_DB_KEY,
+        CONTEXT_STATUSES,
         GROUPS_SUMMARY_DATA,
         GET_GROUP_BY_ID,
         NEW_BLANK_GROUP,

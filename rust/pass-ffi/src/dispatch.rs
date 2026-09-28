@@ -52,6 +52,12 @@ fn dispatch(command: &str, args_json: &str, input: Option<Vec<u8>>) -> Result<An
         Command::ReadKdbx => lifecycle::read(args_json, input),
         Command::SaveKdbxToWriter => lifecycle::save(args_json, input),
         Command::CloseKdbx => lifecycle::close(args_json, input),
+        Command::LockKdbx => lifecycle::lock(args_json, input),
+        Command::UnlockKdbx => lifecycle::unlock(args_json, input),
+        Command::IsDbLocked => lifecycle::is_locked(args_json, input),
+        Command::IsDbOpened => lifecycle::is_opened(args_json, input),
+        Command::RenameDbKey => lifecycle::rename_db_key(args_json, input),
+        Command::KdbxContextStatuses => lifecycle::context_statuses(args_json, input),
 
         Command::GroupsSummaryData => groups::groups_summary_data(args_json, input),
         Command::GetGroupById => groups::get_group_by_id(args_json, input),

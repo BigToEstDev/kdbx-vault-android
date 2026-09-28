@@ -12,7 +12,7 @@
 
 use std::io::Cursor;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use kdbx_rust_core::db_service::{self, NewDatabase};
 
@@ -102,4 +102,115 @@ pub(crate) fn close(args_json: &str, input: Option<Vec<u8>>) -> Result<Answer, E
     db_service::close_kdbx(&args.db_key).map_err(|e| ErrorPayload::of(&e))?;
 
     Done::answer()
+}
+
+/// Arguments of `unlock_kdbx`: the same credentials as opening, checked against the stored key.
+#[derive(Deserialize)]
+struct UnlockArgs {
+    db_key: String,
+    password: Option<String>,
+    key_file_name: Option<String>,
+}
+
+/// Arguments of `rename_db_key`: the file moved, or "save as" wrote it somewhere else.
+#[derive(Deserialize)]
+struct RenameArgs {
+    /// The uri the database is known by now
+    old_db_key: String,
+    /// The uri it should be known by from here on
+    new_db_key: String,
+}
+
+#[derive(Serialize)]
+struct Locked {
+    locked: bool,
+}
+
+#[derive(Serialize)]
+struct Opened {
+    opened: bool,
+}
+
+/// Locks the database in memory: the decrypted content is encrypted in place, so only ciphertext is
+/// left in RAM. Unsaved edits survive - the live content is encrypted, not dropped - so this is not a
+/// save and does not need one.
+pub(crate) fn lock(args_json: &str, input: Option<Vec<u8>>) -> Result<Answer, ErrorPayload> {
+    reject_bytes(Command::LockKdbx, input)?;
+    let args: DbKeyArgs = args(args_json)?;
+
+    db_service::lock_kdbx(&args.db_key).map_err(|e| ErrorPayload::of(&e))?;
+
+    Done::answer()
+}
+
+/// Unlocks it again with the credentials. They are checked against the stored composite key, which
+/// works while the content is still encrypted - a wrong password never touches the content.
+pub(crate) fn unlock(args_json: &str, input: Option<Vec<u8>>) -> Result<Answer, ErrorPayload> {
+    reject_bytes(Command::UnlockKdbx, input)?;
+    let args: UnlockArgs = args(args_json)?;
+
+    let loaded = db_service::unlock_kdbx(
+        &args.db_key,
+        args.password.as_deref(),
+        args.key_file_name.as_deref(),
+    )
+    .map_err(|e| ErrorPayload::of(&e))?;
+
+    json_answer(&loaded)
+}
+
+/// Whether the database is locked - what the app asks when it comes back to the foreground.
+pub(crate) fn is_locked(args_json: &str, input: Option<Vec<u8>>) -> Result<Answer, ErrorPayload> {
+    reject_bytes(Command::IsDbLocked, input)?;
+    let args: DbKeyArgs = args(args_json)?;
+
+    let locked = db_service::is_db_locked(&args.db_key).map_err(|e| ErrorPayload::of(&e))?;
+
+    json_answer(&Locked { locked })
+}
+
+/// Whether the core still holds this database at all.
+///
+/// Unlike the rest, this one cannot fail: a database that is not open is the answer `false`, not a
+/// `DbKeyNotFound` - the question exists precisely to be asked about a database that may be gone,
+/// after the process was killed and restarted.
+pub(crate) fn is_opened(args_json: &str, input: Option<Vec<u8>>) -> Result<Answer, ErrorPayload> {
+    reject_bytes(Command::IsDbOpened, input)?;
+    let args: DbKeyArgs = args(args_json)?;
+
+    json_answer(&Opened {
+        opened: db_service::is_db_opened(&args.db_key),
+    })
+}
+
+/// Tells the core that the file now lives under another uri - after "save as", or after the user moved
+/// or renamed it. The stored encryption key is copied over to the new name by the core.
+pub(crate) fn rename_db_key(
+    args_json: &str,
+    input: Option<Vec<u8>>,
+) -> Result<Answer, ErrorPayload> {
+    reject_bytes(Command::RenameDbKey, input)?;
+    let args: RenameArgs = args(args_json)?;
+
+    let loaded = db_service::rename_db_key(&args.old_db_key, &args.new_db_key)
+        .map_err(|e| ErrorPayload::of(&e))?;
+
+    json_answer(&loaded)
+}
+
+/// When the database was last read and written, and whether it has edits that are not in the file.
+///
+/// `save_pending` is the only way to know there is something to save, so it is what an "unsaved
+/// changes" prompt and the automatic save on going to the background are built on.
+pub(crate) fn context_statuses(
+    args_json: &str,
+    input: Option<Vec<u8>>,
+) -> Result<Answer, ErrorPayload> {
+    reject_bytes(Command::KdbxContextStatuses, input)?;
+    let args: DbKeyArgs = args(args_json)?;
+
+    let statuses =
+        db_service::kdbx_context_statuses(&args.db_key).map_err(|e| ErrorPayload::of(&e))?;
+
+    json_answer(&statuses)
 }

@@ -51,6 +51,12 @@ commands! {
     ReadKdbx => "read_kdbx",
     SaveKdbxToWriter => "save_kdbx_to_writer",
     CloseKdbx => "close_kdbx",
+    LockKdbx => "lock_kdbx",
+    UnlockKdbx => "unlock_kdbx",
+    IsDbLocked => "is_db_locked",
+    IsDbOpened => "is_db_opened",
+    RenameDbKey => "rename_db_key",
+    KdbxContextStatuses => "kdbx_context_statuses",
 
     // Groups: the tree the ui draws, one group for its edit screen, and the operations that change it
     GroupsSummaryData => "groups_summary_data",
