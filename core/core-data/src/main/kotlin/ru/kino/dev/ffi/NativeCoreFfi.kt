@@ -3,7 +3,6 @@ package ru.kino.dev.ffi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.JsonElement
 import ru.kino.dev.core.CreatedDatabase
 import ru.kino.dev.core.NativeCore
 import ru.kino.dev.core.NewDatabase
@@ -94,13 +93,6 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
         FfiEnvelope.unwrap(envelope, GeneratedPasswordDto.serializer()).password
     }
 
-    override suspend fun probeUnknownCommand(): String = withContext(dispatcher) {
-        val envelope = PassFfi.invoke(UNKNOWN_COMMAND, NO_ARGUMENTS.toString())
-        // The unwrap throws before it looks at the payload, so what the payload is declared as does not
-        // matter; a plain JsonElement says that nothing is expected to come back
-        FfiEnvelope.unwrap(envelope, JsonElement.serializer()).toString()
-    }
-
     private fun <T> encode(serializer: kotlinx.serialization.SerializationStrategy<T>, value: T): String =
         FfiEnvelope.json.encodeToString(serializer, value)
 
@@ -141,9 +133,6 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
     )
 
     private companion object {
-        // Deliberately not a command: the dispatcher answers it with the UnknownCommand kind
-        const val UNKNOWN_COMMAND = "no_such_command"
-
         // Tags of the core's enums, as its json spells them
         const val ARGON2ID = "Argon2id"
         const val AES_256 = "Aes256"

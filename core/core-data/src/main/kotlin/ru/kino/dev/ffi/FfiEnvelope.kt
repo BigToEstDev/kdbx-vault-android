@@ -5,7 +5,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
 import ru.kino.dev.core.CoreException
 
 /**
@@ -772,6 +771,3 @@ internal data class PasswordScoreDto(
     @SerialName("raw_value") val rawValue: Double,
     @SerialName("score_text") val scoreText: String,
 )
-
-/** An empty json object, for commands that take no arguments. */
-internal val NO_ARGUMENTS: JsonObject = JsonObject(emptyMap())

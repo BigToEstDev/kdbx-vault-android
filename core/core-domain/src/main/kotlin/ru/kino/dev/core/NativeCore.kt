@@ -56,16 +56,6 @@ interface NativeCore {
 
     /** Generates a password with the core's generator. */
     suspend fun generatePassword(options: PasswordOptions = PasswordOptions()): String
-
-    /**
-     * Asks the bridge for a command that does not exist, and so always fails with the kind
-     * `UnknownCommand`.
-     *
-     * A diagnostic of Step 22: it is the only way from the app to see that a refusal by the bridge
-     * itself - not by the core - arrives as a [CoreException] and not as a crash. It goes away once
-     * Step 23 fills the dispatcher with the real v1 commands.
-     */
-    suspend fun probeUnknownCommand(): String
 }
 
 /**
