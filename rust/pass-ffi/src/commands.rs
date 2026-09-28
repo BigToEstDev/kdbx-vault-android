@@ -152,8 +152,12 @@ mod tests {
         }
 
         let actual = std::fs::read_to_string(CONTRACT_FILE).unwrap_or_default();
+
+        // Line endings are not part of the list: with core.autocrlf git checks the file out as crlf,
+        // and the names are the same names either way
         assert_eq!(
-            actual, expected,
+            actual.replace("\r\n", "\n"),
+            expected,
             "contract/commands.json is out of date; rerun with UPDATE_CONTRACT=1 and commit the file"
         );
     }
