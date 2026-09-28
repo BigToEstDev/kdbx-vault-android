@@ -429,5 +429,18 @@ internal data class CloneEntryDto(
 @Serializable
 internal data class ClonedEntryDto(@SerialName("entry_uuid") val entryUuid: String)
 
+/**
+ * Arguments naming one version in the history of an entry.
+ *
+ * The index is a position in the list `history_entries_summary` answered, not an identity: deleting a
+ * version renumbers the rest, so the ui reloads the summary after every delete.
+ */
+@Serializable
+internal data class HistoryIndexDto(
+    @SerialName("db_key") val dbKey: String,
+    @SerialName("entry_uuid") val entryUuid: String,
+    val index: Int,
+)
+
 /** An empty json object, for commands that take no arguments. */
 internal val NO_ARGUMENTS: JsonObject = JsonObject(emptyMap())

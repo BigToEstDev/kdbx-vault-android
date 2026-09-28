@@ -35,6 +35,8 @@ mod entry_tests;
 #[cfg(test)]
 mod group_tests;
 mod handlers;
+#[cfg(test)]
+mod history_tests;
 mod init;
 mod key_store;
 #[cfg(test)]

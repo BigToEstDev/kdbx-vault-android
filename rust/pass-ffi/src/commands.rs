@@ -77,6 +77,12 @@ commands! {
     MoveEntryToRecycleBin => "move_entry_to_recycle_bin",
     RemoveEntryPermanently => "remove_entry_permanently",
 
+    // The history of an entry: kdbx keeps old versions inside the entry, addressed by index
+    HistoryEntriesSummary => "history_entries_summary",
+    HistoryEntryByIndex => "history_entry_by_index",
+    DeleteHistoryEntryByIndex => "delete_history_entry_by_index",
+    DeleteHistoryEntries => "delete_history_entries",
+
     GeneratePassword => "generate_password",
 }
 

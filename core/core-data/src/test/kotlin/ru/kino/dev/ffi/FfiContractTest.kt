@@ -93,6 +93,16 @@ class FfiContractTest {
     }
 
     /**
+     * An old version is the same form as the entry it belongs to - the core builds both the same way -
+     * so the model is shared, and this test is what keeps that true.
+     */
+    @Test
+    fun `the history of an entry is read exactly as the bridge describes it`() {
+        assertKeysMatchList(FfiCommands.HISTORY_ENTRIES_SUMMARY, EntrySummaryDto.serializer())
+        assertKeysMatch(FfiCommands.HISTORY_ENTRY_BY_INDEX, EntryFormDataDto.serializer())
+    }
+
+    /**
      * Everything that only reports that it went through answers the same way, and the point of this
      * test is exactly that: one model on this side, and no command quietly growing a payload the app
      * would never read.
@@ -112,6 +122,8 @@ class FfiContractTest {
             FfiCommands.MOVE_ENTRY,
             FfiCommands.MOVE_ENTRY_TO_RECYCLE_BIN,
             FfiCommands.REMOVE_ENTRY_PERMANENTLY,
+            FfiCommands.DELETE_HISTORY_ENTRY_BY_INDEX,
+            FfiCommands.DELETE_HISTORY_ENTRIES,
         ).forEach { command ->
             assertKeysMatch(command, DoneDto.serializer())
         }

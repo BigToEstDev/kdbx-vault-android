@@ -13,6 +13,7 @@
 pub(crate) mod entries;
 pub(crate) mod generator;
 pub(crate) mod groups;
+pub(crate) mod history;
 pub(crate) mod lifecycle;
 
 use serde::de::DeserializeOwned;

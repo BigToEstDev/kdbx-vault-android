@@ -43,6 +43,12 @@ internal object FfiCommands {
     const val MOVE_ENTRY_TO_RECYCLE_BIN = "move_entry_to_recycle_bin"
     const val REMOVE_ENTRY_PERMANENTLY = "remove_entry_permanently"
 
+    // The history of an entry: kdbx keeps old versions inside the entry, addressed by index
+    const val HISTORY_ENTRIES_SUMMARY = "history_entries_summary"
+    const val HISTORY_ENTRY_BY_INDEX = "history_entry_by_index"
+    const val DELETE_HISTORY_ENTRY_BY_INDEX = "delete_history_entry_by_index"
+    const val DELETE_HISTORY_ENTRIES = "delete_history_entries"
+
     const val GENERATE_PASSWORD = "generate_password"
 
     /** Every name this side knows. Kept in sync with the contract file by the test. */
@@ -72,6 +78,10 @@ internal object FfiCommands {
         CLONE_ENTRY,
         MOVE_ENTRY_TO_RECYCLE_BIN,
         REMOVE_ENTRY_PERMANENTLY,
+        HISTORY_ENTRIES_SUMMARY,
+        HISTORY_ENTRY_BY_INDEX,
+        DELETE_HISTORY_ENTRY_BY_INDEX,
+        DELETE_HISTORY_ENTRIES,
         GENERATE_PASSWORD,
     )
 }
