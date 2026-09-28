@@ -7,11 +7,15 @@ import org.orbitmvi.orbit.viewmodel.orbitContainer
 import ru.kino.dev.core.CoreException
 import ru.kino.dev.core.NativeCore
 import ru.kino.dev.core.PasswordOptions
+import ru.kino.dev.databasecheck.DatabaseCheckRoute
+import ru.kino.dev.navigation.MviNavEvent
+import ru.kino.dev.navigation.Navigator
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeProcessor @Inject constructor(
     private val nativeCore: NativeCore,
+    private val navigator: Navigator,
 ) :
     ViewModel(),
     OrbitContainerHost<HomeState, HomeState, Nothing> {
@@ -37,11 +41,10 @@ class HomeProcessor @Inject constructor(
      */
     fun onProvokeCoreError() = nativeCall { generatePassword(PasswordOptions(length = 0)) }
 
-    /**
-     * Calls a command the bridge does not have. The other half of the failure path: a refusal by the
-     * bridge rather than by the core, and it has to reach the screen the same way.
-     */
-    fun onProvokeBridgeError() = nativeCall { probeUnknownCommand() }
+    /** Opens the screen that drives a real database through the bridge. */
+    fun onOpenDatabaseCheck() = intent {
+        navigator.navigate(MviNavEvent.NavigateTo(DatabaseCheckRoute))
+    }
 
     private fun loadBuildInfo() = intent {
         val info = runCatching { nativeCore.buildInfo() }

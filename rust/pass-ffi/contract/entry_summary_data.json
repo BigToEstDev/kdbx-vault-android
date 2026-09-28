@@ -1,0 +1,15 @@
+[
+  {
+    "created_time": "number",
+    "custom_icon_uuid": "null-in-this-sample",
+    "entry_type_name": "string",
+    "entry_type_uuid": "string",
+    "history_index": "null-in-this-sample",
+    "icon_id": "number",
+    "modified_time": "number",
+    "parent_group_uuid": "string",
+    "secondary_title": "string",
+    "title": "string",
+    "uuid": "string"
+  }
+]

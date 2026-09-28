@@ -5,6 +5,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import ru.kino.dev.databasecheck.DatabaseCheckRoute
+import ru.kino.dev.databasecheck.DatabaseCheckScreen
 import ru.kino.dev.home.HomeRoute
 import ru.kino.dev.home.HomeScreen
 
@@ -21,6 +23,11 @@ fun AppNavHost(navigator: Navigator) {
     NavHost(navController = navController, startDestination = HomeRoute) {
         composable<HomeRoute> {
             HomeScreen()
+        }
+
+        // Step 23: a real database on a real file, checked from the app itself
+        composable<DatabaseCheckRoute> {
+            DatabaseCheckScreen()
         }
     }
 }

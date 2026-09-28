@@ -11,6 +11,20 @@
     <string name="home_native_error">Error: %1$s</string>
     <string name="home_generate_password">Generate password</string>
     <string name="home_provoke_error">Ask the core for an invalid password</string>
-    <string name="home_provoke_unknown_command">Call a command that does not exist</string>
     <string name="home_native_busy">Working…</string>
+
+    <!-- Step 23: the screen that drives a real database through the bridge. Removed with the real screens -->
+    <string name="database_check_title">Database check</string>
+    <string name="database_check_password">Password</string>
+    <string name="database_check_create">Create in a new file</string>
+    <string name="database_check_open">Open a file</string>
+    <string name="database_check_save">Save</string>
+    <string name="database_check_close">Close</string>
+    <string name="database_check_busy">Working…</string>
+    <string name="database_check_database">Database: %1$s</string>
+    <string name="database_check_file">File: %1$s</string>
+    <string name="database_check_error">Error: %1$s</string>
+    <string name="database_check_recent">Opened before</string>
+    <string name="database_check_log">What happened</string>
+    <string name="home_open_database_check">Check a real database</string>
 </resources>

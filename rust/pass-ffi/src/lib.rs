@@ -19,14 +19,40 @@
 
 use std::panic;
 
-use jni::objects::{JClass, JString};
-use jni::sys::jstring;
+use jni::objects::{JByteArray, JClass, JString};
+use jni::sys::{jbyteArray, jstring};
 use jni::JNIEnv;
+use zeroize::Zeroize;
 
+mod commands;
+#[cfg(test)]
+mod catalog_tests;
+#[cfg(test)]
+mod contract;
 mod dispatch;
 mod errors;
+mod frame;
+#[cfg(test)]
+mod entry_tests;
+#[cfg(test)]
+mod group_tests;
+mod handlers;
+#[cfg(test)]
+mod history_tests;
+#[cfg(test)]
+mod integrity_tests;
 mod init;
+#[cfg(test)]
+mod otp_tests;
 mod key_store;
+#[cfg(test)]
+mod search_tests;
+#[cfg(test)]
+mod settings_tests;
+#[cfg(test)]
+mod lifecycle_tests;
+#[cfg(test)]
+mod test_support;
 
 /// Version of this crate plus the time it was built, so a stale `.so` is visible in the log instead of
 /// being debugged for an hour. Logged by the app on start.
@@ -60,6 +86,63 @@ pub extern "system" fn Java_ru_kino_dev_ffi_PassFfi_invoke<'local>(
         let args_json = read_string(env, &args_json, "argsJson")?;
         Ok(dispatch::run(&command, &args_json))
     })
+}
+
+/// Runs one command across the binary boundary: arguments arrive as bytes so Kotlin can wipe them after
+/// the call, and a database may travel in either direction without being base64'd into json.
+///
+/// The answer is one frame - see `frame` for its shape - because a single return value keeps one channel
+/// for failures: a refusal is still the envelope, with no payload behind it.
+#[no_mangle]
+pub extern "system" fn Java_ru_kino_dev_ffi_PassFfi_invokeBinary<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    command: JString<'local>,
+    args: JByteArray<'local>,
+    input: JByteArray<'local>,
+) -> jbyteArray {
+    init::ensure();
+
+    let outcome = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+        let command = read_string(&mut env, &command, "command")?;
+        let mut args_bytes = read_bytes(&mut env, &args, "args")?.unwrap_or_default();
+        let input_bytes = read_bytes(&mut env, &input, "input")?;
+
+        let args_json = match std::str::from_utf8(&args_bytes) {
+            Ok(text) => text.to_string(),
+            Err(e) => {
+                wipe(&mut args_bytes);
+                return Err(format!("the arguments were not utf-8: {}", e));
+            }
+        };
+
+        let answer = dispatch::run_with_bytes(&command, &args_json, input_bytes);
+
+        // The arguments may have carried a password, so neither copy outlives the call: this one here,
+        // and the Java array on the Kotlin side
+        wipe(&mut args_bytes);
+
+        Ok(frame::build(&answer.envelope, answer.payload.as_deref()))
+    }));
+
+    let frame = match outcome {
+        Ok(Ok(frame)) => frame,
+        Ok(Err(message)) => return throw_bytes(&mut env, &message),
+        Err(payload) => {
+            return throw_bytes(
+                &mut env,
+                &format!("pass-ffi panicked: {}", panic_message(&payload)),
+            )
+        }
+    };
+
+    match env.byte_array_from_slice(&frame) {
+        Ok(array) => array.into_raw(),
+        Err(e) => throw_bytes(
+            &mut env,
+            &format!("the answer could not be returned: {}", e),
+        ),
+    }
 }
 
 // Shared shape of every entry point: initialise once, run the body with panics caught, hand the result
@@ -107,6 +190,35 @@ fn read_string<'local>(
 // Returning a null jstring after throwing is the jni convention: the jvm looks at the pending exception
 // and never at the value.
 fn throw(env: &mut JNIEnv<'_>, message: &str) -> jstring {
+    log::error!("{}", message);
+    let _ = env.throw_new("java/lang/RuntimeException", message);
+    std::ptr::null_mut()
+}
+
+// A null array is how Kotlin says "no bytes"; an empty array is bytes of length zero, and the two mean
+// different things to a command - hence Option rather than Vec.
+fn read_bytes<'local>(
+    env: &mut JNIEnv<'local>,
+    value: &JByteArray<'local>,
+    name: &str,
+) -> Result<Option<Vec<u8>>, String> {
+    if value.is_null() {
+        return Ok(None);
+    }
+
+    env.convert_byte_array(value)
+        .map(Some)
+        .map_err(|e| format!("the argument '{}' could not be read: {}", name, e))
+}
+
+// Overwrites a buffer that may have held a secret. `zeroize` rather than a plain loop: the compiler is
+// free to drop writes to memory nothing reads again, and this crate is where that would matter. The core
+// wipes its own buffers the same way (`db/kdbx_file.rs`).
+fn wipe(buffer: &mut [u8]) {
+    buffer.zeroize();
+}
+
+fn throw_bytes(env: &mut JNIEnv<'_>, message: &str) -> jbyteArray {
     log::error!("{}", message);
     let _ = env.throw_new("java/lang/RuntimeException", message);
     std::ptr::null_mut()

@@ -106,8 +106,9 @@ plugins.withId("com.android.application") {
             }
         }
 
-        // Each variant picks up the libraries built for its own build type
-        sourceSets.getByName("debug").jniLibs.srcDir(jniLibsDirOf("debug"))
-        sourceSets.getByName("release").jniLibs.srcDir(jniLibsDirOf("release"))
+        // Each variant picks up the libraries built for its own build type. `directories` rather than
+        // srcDir: the latter is deprecated in the current AGP dsl
+        sourceSets.getByName("debug").jniLibs.directories += jniLibsDirOf("debug").absolutePath
+        sourceSets.getByName("release").jniLibs.directories += jniLibsDirOf("release").absolutePath
     }
 }
