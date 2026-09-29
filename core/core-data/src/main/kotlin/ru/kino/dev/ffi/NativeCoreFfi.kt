@@ -206,11 +206,20 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
         const val ARGON2ID = "Argon2id"
         const val AES_256 = "Aes256"
 
-        // The core's own defaults, repeated because the arguments have no "use the default" form. 64 MiB
-        // and 10 iterations is what KeePass recommends; whether a phone can afford it is measured before
-        // release, and the answer becomes a constant here
+        // Argon2id parameters of a new database. Measured on a device, not guessed: with the core's
+        // defaults (64 MiB, 10 iterations) deriving the key took about 8 seconds - on opening and on
+        // every save alike, because KeePass draws a new master seed before each write.
+        //
+        // Iterations are what came down, memory stayed. Memory is what makes guessing expensive on a
+        // gpu or on purpose built hardware; iterations only cost the cpu, and they cost it on the one
+        // machine that is waiting - the phone in a hand. 64 MiB with 3 passes is one of the two
+        // configurations RFC 9106 recommends.
+        //
+        // These are the parameters of a database this app creates. A database brought from elsewhere
+        // keeps its own, which is why changing them needs the settings screen, not this constant -
+        // plan/todo/android/kdf-and-perf.md.
         const val ARGON2_MEMORY_BYTES = 67_108_864L
-        const val ARGON2_ITERATIONS = 10L
+        const val ARGON2_ITERATIONS = 3L
         const val ARGON2_PARALLELISM = 2
 
         // The standard "Login" entry type of the core. Its uuid is fixed - the type is built in, not
