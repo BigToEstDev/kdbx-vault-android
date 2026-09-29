@@ -102,6 +102,27 @@ fun DatabaseCheckScreen(processor: DatabaseCheckProcessor = hiltViewModel()) {
             }
         }
 
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = processor::onFill,
+                enabled = !state.isBusy && state.isOpen,
+            ) {
+                Text(
+                    text = stringResource(
+                        R.string.database_check_fill,
+                        DatabaseCheckState.ENTRIES_TO_FILL,
+                    ),
+                )
+            }
+
+            Button(
+                onClick = processor::onMerge,
+                enabled = !state.isBusy && state.isOpen,
+            ) {
+                Text(text = stringResource(R.string.database_check_merge))
+            }
+        }
+
         if (state.isBusy) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

@@ -2,8 +2,10 @@ package ru.kino.dev.database
 
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
+import ru.kino.dev.core.CoreException
 import ru.kino.dev.core.DatabaseFiles
 import ru.kino.dev.core.DatabaseRepository
+import ru.kino.dev.core.MergeSummary
 import ru.kino.dev.core.NativeCore
 import ru.kino.dev.core.NewDatabase
 import ru.kino.dev.core.OpenedDatabase
@@ -81,6 +83,23 @@ internal class DatabaseRepositoryImpl @Inject constructor(
 
     override suspend fun close(dbKey: String) {
         core.closeDatabase(dbKey)
+    }
+
+    override suspend fun hasChangedElsewhere(uri: String): Boolean =
+        try {
+            core.verifyFileChecksum(uri, files.read(uri))
+            false
+        } catch (e: CoreException) {
+            // The one kind that is an answer rather than a failure: the file is fine, it is just not ours
+            // any more. Anything else - the database is not open, the bytes are not a kdbx - is a failure
+            if (e.kind == FILE_CHANGED) true else throw e
+        }
+
+    override suspend fun merge(uri: String): MergeSummary = core.mergeDatabase(uri, files.read(uri))
+
+    private companion object {
+        /** The core's error variant for a file that no longer matches the checksum it was read with. */
+        const val FILE_CHANGED = "DbFileContentChangeDetected"
     }
 
     private suspend fun OpenedDatabase.asRecent(uri: String) = RecentDatabase(

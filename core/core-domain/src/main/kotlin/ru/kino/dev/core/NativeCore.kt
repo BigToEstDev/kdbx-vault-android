@@ -54,6 +54,41 @@ interface NativeCore {
     /** Forgets the database: its contents and its key leave the process. */
     suspend fun closeDatabase(dbKey: String)
 
+    /**
+     * Uuid of the root group, the parent every entry ultimately hangs under.
+     *
+     * A narrow question asked of a wide answer: the core hands back the whole tree, and the callers that
+     * need the tree itself get their own method when a screen needs one.
+     */
+    suspend fun rootGroupUuid(dbKey: String): String
+
+    /**
+     * Adds an entry with [title] to the group [parentGroupUuid].
+     *
+     * The form of an entry belongs to the core - which fields a type has, in which sections - so the only
+     * way to make one is to ask for a blank form and hand it back filled. That round trip stays inside
+     * the implementation: nothing above this interface has a reason to know the shape of the form.
+     */
+    suspend fun addEntry(dbKey: String, parentGroupUuid: String, title: String)
+
+    /**
+     * Compares [bytes] with the checksum taken when the file was last read or written.
+     *
+     * Throws [CoreException] with kind `DbFileContentChangeDetected` when they differ - somebody else
+     * wrote the file, and that is an ordinary outcome the ui answers with a merge, not a breakage.
+     */
+    suspend fun verifyFileChecksum(dbKey: String, bytes: ByteArray)
+
+    /**
+     * Merges the database in [bytes] into the open one and reports what changed.
+     *
+     * Works on the stored composite key, so no password is asked for - which is also why a file
+     * re-encrypted elsewhere comes back as `MergeFailedCredentialsChanged` rather than as a wrong
+     * password. There is no undo: the database in memory changes at once, and the file is only touched
+     * when the caller saves afterwards.
+     */
+    suspend fun mergeDatabase(dbKey: String, bytes: ByteArray): MergeSummary
+
     /** Generates a password with the core's generator. */
     suspend fun generatePassword(options: PasswordOptions = PasswordOptions()): String
 }
@@ -101,6 +136,30 @@ data class OpenedDatabase(
      */
     val fileName: String?,
     val keyFile: String?,
+)
+
+/**
+ * What a merge changed, as counts.
+ *
+ * The core also names every group and entry it touched. The names are left there on purpose: a summary is
+ * what a screen shows, and carrying the contents of a database around in a result object is how they end
+ * up in a log. A screen that lists the changes asks for them when it exists.
+ *
+ * [differentDatabases] is only known after the merge has happened, so a warning about having merged two
+ * unrelated databases is shown as a fact - the way back is closing without saving.
+ */
+data class MergeSummary(
+    val addedGroups: Int,
+    val updatedGroups: Int,
+    val movedGroups: Int,
+    val addedEntries: Int,
+    val updatedEntries: Int,
+    val movedEntries: Int,
+    val deletedGroups: Int,
+    val deletedEntries: Int,
+    val metaDataChanged: Boolean,
+    val mergeDone: Boolean,
+    val differentDatabases: Boolean,
 )
 
 /**
