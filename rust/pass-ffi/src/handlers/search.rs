@@ -27,7 +27,8 @@ pub(crate) fn search_term(args_json: &str, input: Option<Vec<u8>>) -> Result<Ans
     reject_bytes(Command::SearchTerm, input)?;
     let args: SearchArgs = args(args_json)?;
 
-    let found = db_service::search_term(&args.db_key, &args.term).map_err(|e| ErrorPayload::of(&e))?;
+    let found =
+        db_service::search_term(&args.db_key, &args.term).map_err(|e| ErrorPayload::of(&e))?;
 
     json_answer(&found)
 }
@@ -40,7 +41,8 @@ pub(crate) fn collect_entry_group_tags(
     reject_bytes(Command::CollectEntryGroupTags, input)?;
     let args: DbKeyArgs = args(args_json)?;
 
-    let tags = db_service::collect_entry_group_tags(&args.db_key).map_err(|e| ErrorPayload::of(&e))?;
+    let tags =
+        db_service::collect_entry_group_tags(&args.db_key).map_err(|e| ErrorPayload::of(&e))?;
 
     json_answer(&tags)
 }

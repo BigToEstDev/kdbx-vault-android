@@ -6,9 +6,7 @@
 
 use crate::contract::assert_shape;
 use crate::dispatch::run_with_bytes;
-use crate::test_support::{
-    db_key_args, key_of, new_db_args, prepare, read_args, KDBX_SIGNATURE,
-};
+use crate::test_support::{db_key_args, key_of, new_db_args, prepare, read_args, KDBX_SIGNATURE};
 
 #[test]
 fn a_database_is_created_read_saved_and_closed() {
@@ -160,12 +158,20 @@ fn a_database_is_locked_and_unlocked_with_the_same_credentials() {
     let db_key = key_of("lock-unlock");
 
     let created = run_with_bytes("create_and_write_to_writer", &new_db_args(&db_key), None);
-    assert!(created.envelope.starts_with(r#"{"ok":"#), "{}", created.envelope);
+    assert!(
+        created.envelope.starts_with(r#"{"ok":"#),
+        "{}",
+        created.envelope
+    );
 
     // Freshly opened: held by the core and not locked
     let opened = run_with_bytes("is_db_opened", &db_key_args(&db_key), None);
     assert_shape("is_db_opened", &opened.envelope);
-    assert!(opened.envelope.contains(r#""opened":true"#), "{}", opened.envelope);
+    assert!(
+        opened.envelope.contains(r#""opened":true"#),
+        "{}",
+        opened.envelope
+    );
 
     let locked_before = run_with_bytes("is_db_locked", &db_key_args(&db_key), None);
     assert_shape("is_db_locked", &locked_before.envelope);
@@ -190,7 +196,11 @@ fn a_database_is_locked_and_unlocked_with_the_same_credentials() {
         r#"{"db_key":"content://test/lock-unlock.kdbx","password":"not the password","key_file_name":null}"#,
         None,
     );
-    assert!(refused.envelope.starts_with(r#"{"err":"#), "{}", refused.envelope);
+    assert!(
+        refused.envelope.starts_with(r#"{"err":"#),
+        "{}",
+        refused.envelope
+    );
     let still_locked = run_with_bytes("is_db_locked", &db_key_args(&db_key), None);
     assert!(
         still_locked.envelope.contains(r#""locked":true"#),
@@ -204,7 +214,11 @@ fn a_database_is_locked_and_unlocked_with_the_same_credentials() {
         None,
     );
     assert_shape("unlock_kdbx", &unlock.envelope);
-    assert!(unlock.envelope.contains(r#""database_name":"Test""#), "{}", unlock.envelope);
+    assert!(
+        unlock.envelope.contains(r#""database_name":"Test""#),
+        "{}",
+        unlock.envelope
+    );
 
     run_with_bytes("close_kdbx", &db_key_args(&db_key), None);
 }
@@ -221,7 +235,11 @@ fn asking_whether_a_database_is_open_never_fails() {
         None,
     );
 
-    assert!(answer.envelope.starts_with(r#"{"ok":"#), "{}", answer.envelope);
+    assert!(
+        answer.envelope.starts_with(r#"{"ok":"#),
+        "{}",
+        answer.envelope
+    );
     assert!(
         answer.envelope.contains(r#""opened":false"#),
         "a database that is not open answers false rather than failing: {}",
@@ -256,9 +274,17 @@ fn the_file_can_move_to_another_uri() {
 
     // The core knows it by the new name now, and not by the old one
     let under_new = run_with_bytes("is_db_opened", &db_key_args(&new_db_key), None);
-    assert!(under_new.envelope.contains(r#""opened":true"#), "{}", under_new.envelope);
+    assert!(
+        under_new.envelope.contains(r#""opened":true"#),
+        "{}",
+        under_new.envelope
+    );
     let under_old = run_with_bytes("is_db_opened", &db_key_args(&db_key), None);
-    assert!(under_old.envelope.contains(r#""opened":false"#), "{}", under_old.envelope);
+    assert!(
+        under_old.envelope.contains(r#""opened":false"#),
+        "{}",
+        under_old.envelope
+    );
 
     run_with_bytes("close_kdbx", &db_key_args(&new_db_key), None);
 }
@@ -280,8 +306,7 @@ fn an_edit_makes_a_save_pending_and_saving_clears_it() {
 
     // Any change to the content is enough - a group is the cheapest one
     let group = run_with_bytes("new_blank_group", r#"{"mark_as_category":false}"#, None);
-    let mut group: serde_json::Value =
-        crate::test_support::ok_payload(&group.envelope);
+    let mut group: serde_json::Value = crate::test_support::ok_payload(&group.envelope);
     group["parent_group_uuid"] = serde_json::json!(root_of(&db_key));
     group["name"] = serde_json::json!("Pending");
     run_with_bytes(
@@ -333,7 +358,10 @@ fn a_locked_database_is_unlocked_after_an_authentication_that_already_happened()
         &db_key_args(&db_key),
         None,
     );
-    assert_shape("unlock_kdbx_on_biometric_authentication", &unlocked.envelope);
+    assert_shape(
+        "unlock_kdbx_on_biometric_authentication",
+        &unlocked.envelope,
+    );
     assert!(
         unlocked.envelope.contains(r#""database_name":"Test""#),
         "{}",

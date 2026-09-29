@@ -12,8 +12,8 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use kdbx_rust_core::db_service::{self, OtpSettings};
 use kdbx_rust_core::db_content::OtpAlgorithm;
+use kdbx_rust_core::db_service::{self, OtpSettings};
 
 use crate::commands::Command;
 use crate::dispatch::Answer;
@@ -115,7 +115,10 @@ pub(crate) fn entry_list_current_otps(
 
 /// Builds the `otpauth://` url out of the settings - what a "show the qr code" screen needs. No
 /// database is involved.
-pub(crate) fn form_otp_url(args_json: &str, input: Option<Vec<u8>>) -> Result<Answer, ErrorPayload> {
+pub(crate) fn form_otp_url(
+    args_json: &str,
+    input: Option<Vec<u8>>,
+) -> Result<Answer, ErrorPayload> {
     reject_bytes(Command::FormOtpUrl, input)?;
     let settings: Settings = args(args_json)?;
 
@@ -140,7 +143,10 @@ pub(crate) fn is_valid_otp_url(
 
 /// Sets or replaces the 2fa of an entry. The core validates the settings first, so a secret that
 /// cannot be decoded comes back as a failure and the entry is left alone.
-pub(crate) fn set_entry_otp(args_json: &str, input: Option<Vec<u8>>) -> Result<Answer, ErrorPayload> {
+pub(crate) fn set_entry_otp(
+    args_json: &str,
+    input: Option<Vec<u8>>,
+) -> Result<Answer, ErrorPayload> {
     reject_bytes(Command::SetEntryOtp, input)?;
     let args: EntryOtpArgs = args(args_json)?;
 
@@ -158,7 +164,8 @@ pub(crate) fn delete_entry_otp(
     reject_bytes(Command::DeleteEntryOtp, input)?;
     let args: EntryIdArgs = args(args_json)?;
 
-    db_service::delete_entry_otp(&args.db_key, &args.entry_uuid).map_err(|e| ErrorPayload::of(&e))?;
+    db_service::delete_entry_otp(&args.db_key, &args.entry_uuid)
+        .map_err(|e| ErrorPayload::of(&e))?;
 
     Done::answer()
 }

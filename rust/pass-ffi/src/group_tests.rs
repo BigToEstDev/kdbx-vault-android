@@ -9,7 +9,9 @@ use serde_json::{json, Value};
 
 use crate::contract::assert_shape;
 use crate::dispatch::run_with_bytes;
-use crate::test_support::{close_database, db_key_args, key_of, ok_payload, open_database, prepare};
+use crate::test_support::{
+    close_database, db_key_args, key_of, ok_payload, open_database, prepare,
+};
 
 /// Runs a command with a json object of arguments and returns the envelope.
 fn call(command: &str, args: Value) -> String {
@@ -195,7 +197,11 @@ fn a_group_is_cloned_and_the_copy_has_its_own_uuid() {
         .as_str()
         .expect("cloning answers with the uuid of the copy")
         .to_string();
-    assert_ne!(clone_uuid, uuid_of(&original), "a copy is a different group");
+    assert_ne!(
+        clone_uuid,
+        uuid_of(&original),
+        "a copy is a different group"
+    );
 
     let clone = call_ok(
         "get_group_by_id",
@@ -277,13 +283,19 @@ fn a_group_goes_to_the_recycle_bin_and_can_be_removed_for_good() {
     let recycle_bin = after_binning["recycle_bin_uuid"]
         .as_str()
         .expect("binning creates the recycle bin");
-    let in_bin = call_ok("get_group_by_id", json!({"db_key": db_key, "group_uuid": uuid}));
+    let in_bin = call_ok(
+        "get_group_by_id",
+        json!({"db_key": db_key, "group_uuid": uuid}),
+    );
     assert_eq!(in_bin["parent_group_uuid"].as_str(), Some(recycle_bin));
 
     let removed = call("remove_group_permanently", group_id_args(&db_key, &uuid));
     assert_shape("remove_group_permanently", &removed);
 
-    let gone = call("get_group_by_id", json!({"db_key": db_key, "group_uuid": uuid}));
+    let gone = call(
+        "get_group_by_id",
+        json!({"db_key": db_key, "group_uuid": uuid}),
+    );
     assert!(
         gone.starts_with(r#"{"err":"#),
         "a removed group is not found any more: {}",

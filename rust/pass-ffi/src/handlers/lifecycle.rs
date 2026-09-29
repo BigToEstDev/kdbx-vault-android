@@ -50,8 +50,8 @@ pub(crate) fn create(args_json: &str, input: Option<Vec<u8>>) -> Result<Answer, 
     let new_db: NewDatabase = args(args_json)?;
 
     let mut buffer = Cursor::new(Vec::<u8>::new());
-    let loaded =
-        db_service::create_and_write_to_writer(&mut buffer, new_db).map_err(|e| ErrorPayload::of(&e))?;
+    let loaded = db_service::create_and_write_to_writer(&mut buffer, new_db)
+        .map_err(|e| ErrorPayload::of(&e))?;
 
     Ok(Answer {
         envelope: ok_envelope(&loaded)?,
@@ -85,8 +85,8 @@ pub(crate) fn save(args_json: &str, input: Option<Vec<u8>>) -> Result<Answer, Er
     // A fresh buffer, never the previous contents of the file: `save_kdbx_to_writer` does not truncate
     // its writer, and a shorter database would otherwise keep the tail of the older one
     let mut buffer = Cursor::new(Vec::<u8>::new());
-    let saved =
-        db_service::save_kdbx_to_writer(&mut buffer, &args.db_key).map_err(|e| ErrorPayload::of(&e))?;
+    let saved = db_service::save_kdbx_to_writer(&mut buffer, &args.db_key)
+        .map_err(|e| ErrorPayload::of(&e))?;
 
     Ok(Answer {
         envelope: ok_envelope(&saved)?,

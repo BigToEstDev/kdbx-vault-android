@@ -54,7 +54,10 @@ fn entry_with_history(db_key: &str, revisions: usize) -> String {
         json!({"db_key": db_key, "form_data": form}),
     );
 
-    let uuid = form["uuid"].as_str().expect("a form has a uuid").to_string();
+    let uuid = form["uuid"]
+        .as_str()
+        .expect("a form has a uuid")
+        .to_string();
 
     for revision in 1..=revisions {
         let mut current = call_ok(
@@ -86,7 +89,12 @@ fn every_update_leaves_a_version_behind() {
 
     let versions = ok_payload(&envelope);
     let summaries = versions.as_array().expect("the history is a list");
-    assert_eq!(summaries.len(), 2, "two updates leave two versions: {}", versions);
+    assert_eq!(
+        summaries.len(),
+        2,
+        "two updates leave two versions: {}",
+        versions
+    );
     assert!(
         summaries
             .iter()

@@ -55,7 +55,10 @@ fn new_entry(db_key: &str) -> String {
         json!({"db_key": db_key, "form_data": form}),
     );
 
-    form["uuid"].as_str().expect("a form has a uuid").to_string()
+    form["uuid"]
+        .as_str()
+        .expect("a form has a uuid")
+        .to_string()
 }
 
 #[test]
@@ -103,7 +106,9 @@ fn an_entry_gets_a_code_and_then_loses_it() {
         "six digits were asked for: {}",
         token
     );
-    let ttl = token["ttl"].as_u64().expect("a token says how long it lives");
+    let ttl = token["ttl"]
+        .as_u64()
+        .expect("a token says how long it lives");
     assert!(ttl > 0 && ttl <= 30, "ttl is within the period: {}", token);
 
     let deleted = call(
@@ -157,7 +162,10 @@ fn the_settings_become_a_url_and_the_url_is_recognised() {
 
 #[test]
 fn a_url_that_is_not_an_otp_url_is_an_answer_and_not_a_failure() {
-    let envelope = call("is_valid_otp_url", json!({"otp_url": "https://example.org"}));
+    let envelope = call(
+        "is_valid_otp_url",
+        json!({"otp_url": "https://example.org"}),
+    );
 
     assert!(envelope.starts_with(r#"{"ok":"#), "{}", envelope);
     assert_eq!(ok_payload(&envelope)["valid"].as_bool(), Some(false));

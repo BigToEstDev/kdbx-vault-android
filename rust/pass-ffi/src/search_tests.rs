@@ -123,8 +123,12 @@ fn the_tags_of_entries_and_groups_are_listed_apart() {
     assert_shape("collect_entry_group_tags", &envelope);
 
     let tags = ok_payload(&envelope);
-    let entry_tags = tags["entry_tags"].as_array().expect("entry tags are a list");
-    let group_tags = tags["group_tags"].as_array().expect("group tags are a list");
+    let entry_tags = tags["entry_tags"]
+        .as_array()
+        .expect("entry tags are a list");
+    let group_tags = tags["group_tags"]
+        .as_array()
+        .expect("group tags are a list");
 
     assert!(
         entry_tags.iter().any(|tag| tag == "work"),

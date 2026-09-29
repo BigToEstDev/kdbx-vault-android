@@ -48,7 +48,10 @@ fn new_entry(db_key: &str, title: &str) -> String {
         json!({"db_key": db_key, "form_data": form}),
     );
 
-    form["uuid"].as_str().expect("a form has a uuid").to_string()
+    form["uuid"]
+        .as_str()
+        .expect("a form has a uuid")
+        .to_string()
 }
 
 fn entry_count(db_key: &str, category: Value) -> usize {
