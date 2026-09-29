@@ -33,7 +33,14 @@ uuid = { version = "1.18.1", features = ["serde"] }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-log = "0.4"
+
+## The log facade, with the ceiling for release builds compiled in. `release_max_level_warn` makes the
+## macros below warn expand to nothing when `debug_assertions` are off, so the strings never reach the
+## `.so` and there is no runtime check to skip them - a filter set at startup would leave both. The
+## feature is on the `log` crate itself, so it applies to the core too: cargo resolves one `log` for the
+## whole build. What it keeps out of logcat is the path of the database file and its name, which the core
+## logs at debug level on every read and write.
+log = { version = "0.4", features = ["release_max_level_warn"] }
 
 ## Routes the core's log macros to logcat. Android only - on the host the crate builds without it.
 [target.'cfg(target_os = "android")'.dependencies]

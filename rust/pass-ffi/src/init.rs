@@ -19,12 +19,26 @@ pub(crate) fn ensure() {
 
 #[cfg(target_os = "android")]
 fn install_logger() {
-    // The core logs through the `log` facade; this points it at logcat. Debug level: the core's debug
-    // lines are what make a failure on a device diagnosable at all, and they carry no secrets - values
-    // of fields are never logged, only names and sizes.
+    // The core logs through the `log` facade; this points it at logcat.
+    //
+    // Debug while developing: the core's debug lines are what make a failure on a device diagnosable at
+    // all. In a release build they are not wanted - values of fields are never logged, but the path of
+    // the database file and its name are, and logcat is readable by anything with debugging access.
+    //
+    // This is the runtime half of the answer, and the smaller one: the ceiling is compiled in through
+    // `log/release_max_level_warn` in Cargo.toml, which removes the macro calls altogether. Both are
+    // here because they answer different questions - the feature decides what exists in the `.so`, this
+    // decides what the logger accepts - and a release build where the two disagreed would be confusing
+    // to read.
+    let level = if cfg!(debug_assertions) {
+        log::LevelFilter::Debug
+    } else {
+        log::LevelFilter::Warn
+    };
+
     android_logger::init_once(
         android_logger::Config::default()
-            .with_max_level(log::LevelFilter::Debug)
+            .with_max_level(level)
             .with_tag("pass-ffi"),
     );
 }
