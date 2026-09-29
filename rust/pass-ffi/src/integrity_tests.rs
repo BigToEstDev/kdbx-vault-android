@@ -159,8 +159,14 @@ fn a_file_written_elsewhere_is_merged_back_in() {
 
     // One database, saved - this stands in for the file as it was
     let created = run_with_bytes("create_and_write_to_writer", &new_db_args(&db_key), None);
-    assert!(created.envelope.starts_with(r#"{"ok":"#), "{}", created.envelope);
-    let original = created.payload.expect("the new database comes back as bytes");
+    assert!(
+        created.envelope.starts_with(r#"{"ok":"#),
+        "{}",
+        created.envelope
+    );
+    let original = created
+        .payload
+        .expect("the new database comes back as bytes");
 
     // "Somebody else" opens that same file under a key of its own and adds an entry
     let other_key = key_of("merge-source");
@@ -169,7 +175,11 @@ fn a_file_written_elsewhere_is_merged_back_in() {
         &read_args(&other_key, "open sesame"),
         Some(original),
     );
-    assert!(opened.envelope.starts_with(r#"{"ok":"#), "{}", opened.envelope);
+    assert!(
+        opened.envelope.starts_with(r#"{"ok":"#),
+        "{}",
+        opened.envelope
+    );
     new_entry(&other_key, "Added elsewhere");
     let changed_file = save_bytes(&other_key);
     close_database(&other_key);

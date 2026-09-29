@@ -7,6 +7,8 @@ import org.orbitmvi.orbit.viewmodel.orbitContainer
 import ru.kino.dev.core.CoreException
 import ru.kino.dev.core.DatabaseFileException
 import ru.kino.dev.core.DatabaseRepository
+import ru.kino.dev.core.MergeSummary
+import ru.kino.dev.core.NativeCore
 import ru.kino.dev.core.OpenedDatabase
 import ru.kino.dev.core.RecentDatabases
 import javax.inject.Inject
@@ -21,6 +23,9 @@ import javax.inject.Inject
 @HiltViewModel
 class DatabaseCheckProcessor @Inject constructor(
     private val databases: DatabaseRepository,
+    // Reached past the repository on purpose: filling a database with entries is not a user intention,
+    // it is how this screen makes one big enough for a merge to say anything
+    private val core: NativeCore,
     private val recent: RecentDatabases,
 ) :
     ViewModel(),
@@ -112,6 +117,59 @@ class DatabaseCheckProcessor @Inject constructor(
         }
     }
 
+    /**
+     * Fills the open database with entries and saves it.
+     *
+     * Separate from the merge button because it is the slow half: a hundred entries is a hundred round
+     * trips through the bridge, and there is no reason to pay for it again on every merge.
+     */
+    fun onFill() = intent {
+        val uri = state.uri ?: return@intent
+        begin("adding ${DatabaseCheckState.ENTRIES_TO_FILL} entries")
+
+        val outcome = runCatching {
+            val root = core.rootGroupUuid(uri)
+            repeat(DatabaseCheckState.ENTRIES_TO_FILL) { index ->
+                core.addEntry(dbKey = uri, parentGroupUuid = root, title = "Entry ${index + 1}")
+            }
+            databases.save(uri)
+        }
+
+        reduce {
+            outcome.fold(
+                onSuccess = { state.done("added ${DatabaseCheckState.ENTRIES_TO_FILL} entries and saved") },
+                onFailure = { state.failed(it) },
+            )
+        }
+    }
+
+    /**
+     * Merges the file into the open database - which is the same database, so nothing changes.
+     *
+     * That is the point: merge walks both trees whatever the outcome, and this is the loudest thing the
+     * core does. What it is here to show is the clock and logcat, not the result.
+     */
+    fun onMerge() = intent {
+        val uri = state.uri ?: return@intent
+        begin("merging the file back in")
+
+        val outcome = runCatching {
+            val changed = databases.hasChangedElsewhere(uri)
+            val summary = databases.merge(uri)
+            changed to summary
+        }
+
+        reduce {
+            outcome.fold(
+                onSuccess = { (changed, summary) ->
+                    val file = if (changed) "the file differs" else "the file still matches"
+                    state.done("$file; ${summary.describe()}")
+                },
+                onFailure = { state.failed(it) },
+            )
+        }
+    }
+
     fun onPasswordChange(password: String) = intent {
         reduce { state.copy(password = password) }
     }
@@ -140,6 +198,13 @@ class DatabaseCheckProcessor @Inject constructor(
         error = cause.describe(),
         log = log + "failed",
     )
+
+    // Counts only: names of groups and entries are the contents of the database, and this line is read
+    // off a screen and copied into a report
+    private fun MergeSummary.describe(): String =
+        "merged=$mergeDone, different=$differentDatabases, meta=$metaDataChanged, " +
+            "groups +$addedGroups ~$updatedGroups >$movedGroups -$deletedGroups, " +
+            "entries +$addedEntries ~$updatedEntries >$movedEntries -$deletedEntries"
 
     private fun Throwable.describe(): String = when (this) {
         is CoreException -> "$kind: $message"

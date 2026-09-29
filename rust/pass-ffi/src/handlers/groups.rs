@@ -157,7 +157,10 @@ pub(crate) fn new_blank_group_with_parent(
 }
 
 /// Puts a new group into the tree. The group carries its own parent.
-pub(crate) fn insert_group(args_json: &str, input: Option<Vec<u8>>) -> Result<Answer, ErrorPayload> {
+pub(crate) fn insert_group(
+    args_json: &str,
+    input: Option<Vec<u8>>,
+) -> Result<Answer, ErrorPayload> {
     reject_bytes(Command::InsertGroup, input)?;
     let args: GroupArgs = args(args_json)?;
 
@@ -167,7 +170,10 @@ pub(crate) fn insert_group(args_json: &str, input: Option<Vec<u8>>) -> Result<An
 }
 
 /// Writes an edited group back. Moving it is `move_group`, not a changed parent here.
-pub(crate) fn update_group(args_json: &str, input: Option<Vec<u8>>) -> Result<Answer, ErrorPayload> {
+pub(crate) fn update_group(
+    args_json: &str,
+    input: Option<Vec<u8>>,
+) -> Result<Answer, ErrorPayload> {
     reject_bytes(Command::UpdateGroup, input)?;
     let args: GroupArgs = args(args_json)?;
 

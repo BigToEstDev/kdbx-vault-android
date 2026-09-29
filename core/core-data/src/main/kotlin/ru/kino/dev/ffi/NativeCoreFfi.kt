@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.kino.dev.core.CreatedDatabase
+import ru.kino.dev.core.MergeSummary
 import ru.kino.dev.core.NativeCore
 import ru.kino.dev.core.NewDatabase
 import ru.kino.dev.core.OpenedDatabase
@@ -84,6 +85,60 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
         }
     }
 
+    override suspend fun rootGroupUuid(dbKey: String): String = withContext(dispatcher) {
+        val envelope = PassFfi.invoke(
+            FfiCommands.GROUPS_SUMMARY_DATA,
+            encode(DbKeyDto.serializer(), DbKeyDto(dbKey)),
+        )
+        FfiEnvelope.unwrap(envelope, GroupTreeDto.serializer()).rootUuid
+    }
+
+    override suspend fun addEntry(dbKey: String, parentGroupUuid: String, title: String) {
+        withContext(dispatcher) {
+            val blank = PassFfi.invoke(
+                FfiCommands.NEW_ENTRY_FORM_DATA_BY_ID,
+                encode(
+                    NewEntryFormDto.serializer(),
+                    NewEntryFormDto(
+                        dbKey = dbKey,
+                        entryTypeUuid = LOGIN_ENTRY_TYPE_UUID,
+                        parentGroupUuid = parentGroupUuid,
+                    ),
+                ),
+            )
+            // The form comes back complete - uuid, times, the fields of the type - and goes back whole.
+            // Only the title is ours to set: everything else is the core's idea of what this type is
+            val form = FfiEnvelope.unwrap(blank, EntryFormDataDto.serializer()).copy(title = title)
+
+            val envelope = PassFfi.invoke(
+                FfiCommands.INSERT_ENTRY_FROM_FORM_DATA,
+                encode(EntryFormArgsDto.serializer(), EntryFormArgsDto(dbKey = dbKey, formData = form)),
+            )
+            FfiEnvelope.unwrap(envelope, DoneDto.serializer())
+        }
+    }
+
+    override suspend fun verifyFileChecksum(dbKey: String, bytes: ByteArray) {
+        withContext(dispatcher) {
+            val answer = FfiBinaryCall.call(
+                command = FfiCommands.VERIFY_DB_FILE_CHECKSUM,
+                argsJson = encode(DbKeyDto.serializer(), DbKeyDto(dbKey)),
+                input = bytes,
+            )
+            FfiEnvelope.unwrap(answer.envelope, DoneDto.serializer())
+        }
+    }
+
+    override suspend fun mergeDatabase(dbKey: String, bytes: ByteArray): MergeSummary =
+        withContext(dispatcher) {
+            val answer = FfiBinaryCall.call(
+                command = FfiCommands.MERGE_DATABASE,
+                argsJson = encode(DbKeyDto.serializer(), DbKeyDto(dbKey)),
+                input = bytes,
+            )
+            FfiEnvelope.unwrap(answer.envelope, MergeResultDto.serializer()).toDomain()
+        }
+
     override suspend fun generatePassword(options: PasswordOptions): String = withContext(dispatcher) {
         val args = FfiEnvelope.json.encodeToString(
             PasswordOptionsDto.serializer(),
@@ -121,6 +176,20 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
         keyFile = keyFileName,
     )
 
+    private fun MergeResultDto.toDomain() = MergeSummary(
+        addedGroups = addedGroups.size,
+        updatedGroups = updatedGroups.size,
+        movedGroups = parentChangedGroups.size,
+        addedEntries = addedEntries.size,
+        updatedEntries = updatedEntries.size,
+        movedEntries = parentChangedEntries.size,
+        deletedGroups = permanentlyDeletedGroups.size,
+        deletedEntries = permanentlyDeletedEntries.size,
+        metaDataChanged = metaDataChanged,
+        mergeDone = mergeDone,
+        differentDatabases = differentDatabases,
+    )
+
     private fun PasswordOptions.toDto() = PasswordOptionsDto(
         length = length,
         numbers = numbers,
@@ -143,5 +212,9 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
         const val ARGON2_MEMORY_BYTES = 67_108_864L
         const val ARGON2_ITERATIONS = 10L
         const val ARGON2_PARALLELISM = 2
+
+        // The standard "Login" entry type of the core. Its uuid is fixed - the type is built in, not
+        // stored in the database - and it is the type an entry gets when nothing else is chosen
+        const val LOGIN_ENTRY_TYPE_UUID = "ffef5f51-7efc-4373-9eb5-382d5b501768"
     }
 }

@@ -20,6 +20,8 @@
     <string name="database_check_open">Open a file</string>
     <string name="database_check_save">Save</string>
     <string name="database_check_close">Close</string>
+    <string name="database_check_fill">Add %1$d entries</string>
+    <string name="database_check_merge">Merge the file back in</string>
     <string name="database_check_busy">Working…</string>
     <string name="database_check_database">Database: %1$s</string>
     <string name="database_check_file">File: %1$s</string>

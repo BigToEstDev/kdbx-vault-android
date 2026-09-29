@@ -30,5 +30,14 @@ data class DatabaseCheckState(
     companion object {
         // A fixed password keeps the check to two taps; it is a throwaway database on a throwaway file
         const val DEFAULT_PASSWORD = "check me"
+
+        /**
+         * How many entries the fill button adds.
+         *
+         * A test number, not a product one: merge walks the whole tree, and on a database of a root and a
+         * recycle bin there is nothing to see in the log. Big enough that logcat and the clock say
+         * something, small enough to wait for on a phone.
+         */
+        const val ENTRIES_TO_FILL = 100
     }
 }

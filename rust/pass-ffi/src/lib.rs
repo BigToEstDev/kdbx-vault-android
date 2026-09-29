@@ -24,33 +24,33 @@ use jni::sys::{jbyteArray, jstring};
 use jni::JNIEnv;
 use zeroize::Zeroize;
 
-mod commands;
 #[cfg(test)]
 mod catalog_tests;
+mod commands;
 #[cfg(test)]
 mod contract;
 mod dispatch;
-mod errors;
-mod frame;
 #[cfg(test)]
 mod entry_tests;
+mod errors;
+mod frame;
 #[cfg(test)]
 mod group_tests;
 mod handlers;
 #[cfg(test)]
 mod history_tests;
-#[cfg(test)]
-mod integrity_tests;
 mod init;
 #[cfg(test)]
-mod otp_tests;
+mod integrity_tests;
 mod key_store;
+#[cfg(test)]
+mod lifecycle_tests;
+#[cfg(test)]
+mod otp_tests;
 #[cfg(test)]
 mod search_tests;
 #[cfg(test)]
 mod settings_tests;
-#[cfg(test)]
-mod lifecycle_tests;
 #[cfg(test)]
 mod test_support;
 

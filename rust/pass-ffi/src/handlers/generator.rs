@@ -39,7 +39,9 @@ pub(crate) fn analyzed_password(
 ) -> Result<Answer, ErrorPayload> {
     reject_bytes(Command::AnalyzedPassword, input)?;
     let options: PasswordGenerationOptions = args_or_default(args_json)?;
-    let analyzed = options.analyzed_password().map_err(|e| ErrorPayload::of(&e))?;
+    let analyzed = options
+        .analyzed_password()
+        .map_err(|e| ErrorPayload::of(&e))?;
 
     json_answer(&analyzed)
 }

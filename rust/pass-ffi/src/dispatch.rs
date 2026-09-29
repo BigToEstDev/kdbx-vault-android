@@ -41,7 +41,11 @@ pub(crate) fn run_with_bytes(command: &str, args_json: &str, input: Option<Vec<u
     }
 }
 
-fn dispatch(command: &str, args_json: &str, input: Option<Vec<u8>>) -> Result<Answer, ErrorPayload> {
+fn dispatch(
+    command: &str,
+    args_json: &str,
+    input: Option<Vec<u8>>,
+) -> Result<Answer, ErrorPayload> {
     let parsed = Command::parse(command).ok_or_else(|| {
         ErrorPayload::bridge(
             "UnknownCommand",

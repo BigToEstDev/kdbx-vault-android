@@ -97,7 +97,9 @@ fn compare(command: &str, shape: &Value) {
     let path = format!("{}/contract/{}.json", env!("CARGO_MANIFEST_DIR"), command);
 
     // A poisoned lock means another test already failed; its own panic is the one worth reading
-    let _guard = FILES.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    let _guard = FILES
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
 
     if std::env::var("UPDATE_CONTRACT").is_ok() {
         std::fs::write(&path, &expected).unwrap();
