@@ -79,4 +79,21 @@ class FfiEnvelopeTest {
         assertTrue(json, json.contains(""""exclude_similar_characters":true"""))
         assertTrue(json, json.contains(""""length":20"""))
     }
+
+    // The bridge reads `key_file` as {name, content} with standard padded base64 (src/key_file.rs)
+    @Test
+    fun `a key file is serialised the way the bridge reads it`() {
+        val json = FfiEnvelope.json.encodeToString(
+            ReadKdbxDto.serializer(),
+            ReadKdbxDto(
+                dbKey = "content://db",
+                password = "pw",
+                keyFile = KeyFileDto(name = "my.keyx", content = "AAEC"),
+                fileName = "db.kdbx",
+            ),
+        )
+
+        assertTrue(json, json.contains(""""key_file":{"name":"my.keyx","content":"AAEC"}"""))
+        assertTrue("no path is sent any more: $json", !json.contains("key_file_name"))
+    }
 }

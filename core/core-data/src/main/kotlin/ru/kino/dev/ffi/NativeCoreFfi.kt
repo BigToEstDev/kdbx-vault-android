@@ -3,12 +3,16 @@ package ru.kino.dev.ffi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import ru.kino.dev.core.CoreException
 import ru.kino.dev.core.CreatedDatabase
+import ru.kino.dev.core.CredentialLimits
+import ru.kino.dev.core.KeyFile
 import ru.kino.dev.core.MergeSummary
 import ru.kino.dev.core.NativeCore
 import ru.kino.dev.core.NewDatabase
 import ru.kino.dev.core.OpenedDatabase
 import ru.kino.dev.core.PasswordOptions
+import java.util.Base64
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -46,12 +50,12 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
         bytes: ByteArray,
         password: String?,
         fileName: String?,
-        keyFile: String?,
+        keyFile: KeyFile?,
     ): OpenedDatabase = withContext(dispatcher) {
         val args = ReadKdbxDto(
             dbKey = dbKey,
             password = password,
-            keyFileName = keyFile,
+            keyFile = keyFile?.toDto(),
             fileName = fileName,
         )
         val answer = FfiBinaryCall.call(
@@ -148,6 +152,14 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
         FfiEnvelope.unwrap(envelope, GeneratedPasswordDto.serializer()).password
     }
 
+    override suspend fun generateKeyFile(): ByteArray = withContext(dispatcher) {
+        // No arguments; the key file comes back in the binary slot, the way a saved database does
+        val answer = FfiBinaryCall.call(command = FfiCommands.GENERATE_KEY_FILE, argsJson = "")
+        FfiEnvelope.unwrap(answer.envelope, DoneDto.serializer())
+
+        answer.payload
+    }
+
     private fun <T> encode(serializer: kotlinx.serialization.SerializationStrategy<T>, value: T): String =
         FfiEnvelope.json.encodeToString(serializer, value)
 
@@ -157,7 +169,7 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
         databaseName = databaseName,
         databaseDescription = databaseDescription,
         password = password,
-        keyFileName = keyFile,
+        keyFile = keyFile?.toDto(),
         // Argon2id and AES-256 are what a new KeePass database is expected to be. The parameters are the
         // core's defaults for now; what they should be on a phone is decided after measuring on a device
         kdf = KdfDto(
@@ -173,8 +185,22 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
         dbKey = dbKey,
         databaseName = databaseName,
         fileName = fileName,
-        keyFile = keyFileName,
+        keyFileName = keyFileName,
     )
+
+    /**
+     * Refused here before encoding, not only by the core: base64 of a picked video would be a string of a
+     * dozen megabytes built for nothing. The same kind as the core's refusal, so a caller has one to handle.
+     */
+    private fun KeyFile.toDto(): KeyFileDto {
+        if (CredentialLimits.isKeyFileTooLarge(content.size.toLong())) {
+            throw CoreException(
+                kind = CredentialLimits.KIND_KEY_FILE_TOO_LARGE,
+                message = "The key file is larger than ${CredentialLimits.KEY_FILE_MAX_SIZE} bytes",
+            )
+        }
+        return KeyFileDto(name = name, content = Base64.getEncoder().encodeToString(content))
+    }
 
     private fun MergeResultDto.toDomain() = MergeSummary(
         addedGroups = addedGroups.size,
