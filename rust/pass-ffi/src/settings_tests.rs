@@ -163,7 +163,7 @@ fn a_key_file_is_added_in_the_settings_as_content() {
 
     // The composite key changed: the password alone no longer unlocks, with the key file it does
     let refused = unlock_with(&db_key, Value::Null);
-    assert!(refused.contains("HeaderHmacHashCheckFailed"), "{}", refused);
+    assert!(refused.contains("InvalidCredentials"), "{}", refused);
     let unlocked = unlock_with(&db_key, key_file_json("added.keyx", &content));
     assert!(unlocked.starts_with(r#"{"ok":"#), "{}", unlocked);
 
