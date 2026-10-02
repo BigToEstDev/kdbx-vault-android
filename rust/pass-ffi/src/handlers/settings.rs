@@ -6,8 +6,8 @@
 //! so the ui reads the settings, edits them, and sends them in.
 //!
 //! A new key file comes back as bytes, for the app to write through SAF - the core no longer writes it
-//! itself. One place still takes a key file by path: `key_file_name` inside `DbSettings`. Moving it to
-//! content waits for the settings screen (plan/todo/android/db-credentials-change.md in pass-docs).
+//! itself. A changed key file goes in as content too, `key_file` beside the settings (Step 31):
+//! `key_file_name` inside `DbSettings` is the name to show and is never read on the way in.
 
 use serde::Deserialize;
 
@@ -18,11 +18,16 @@ use crate::dispatch::Answer;
 use crate::errors::{ok_envelope, ErrorPayload};
 use crate::handlers::lifecycle::DbKeyArgs;
 use crate::handlers::{args, json_answer, reject_bytes, Done};
+use crate::key_file::{file_key_of, KeyFileArg};
 
 #[derive(Deserialize)]
 struct SetSettingsArgs {
     db_key: String,
     settings: DbSettings,
+    /// Only with `key_file_used` and `key_file_changed` in the settings - anywhere else the core refuses
+    /// it rather than ignore a key file the caller expects to be applied
+    #[serde(default)]
+    key_file: Option<KeyFileArg>,
 }
 
 /// The settings as they are: the kdf and cipher, which credentials are in use, and the metadata of
@@ -49,8 +54,10 @@ pub(crate) fn set_db_settings(
 ) -> Result<Answer, ErrorPayload> {
     reject_bytes(Command::SetDbSettings, input)?;
     let args: SetSettingsArgs = args(args_json)?;
+    let file_key = file_key_of(args.key_file)?;
 
-    db_service::set_db_settings(&args.db_key, args.settings).map_err(|e| ErrorPayload::of(&e))?;
+    db_service::set_db_settings(&args.db_key, args.settings, file_key)
+        .map_err(|e| ErrorPayload::of(&e))?;
 
     Done::answer()
 }

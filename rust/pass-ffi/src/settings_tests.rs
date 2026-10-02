@@ -118,3 +118,73 @@ fn the_settings_of_a_database_that_is_not_open_say_so() {
 
     assert!(envelope.contains("DbKeyNotFound"), "{}", envelope);
 }
+
+// --- A changed key file goes in as content (Step 31) ---
+
+fn key_file_json(name: &str, content: &[u8]) -> Value {
+    json!({ "name": name, "content": crate::key_file::encode(content) })
+}
+
+fn unlock_with(db_key: &str, key_file: Value) -> String {
+    call("lock_kdbx", json!({ "db_key": db_key }));
+    call(
+        "unlock_kdbx",
+        json!({
+            "db_key": db_key,
+            "password": crate::test_support::TEST_PASSWORD,
+            "key_file": key_file,
+        }),
+    )
+}
+
+#[test]
+fn a_key_file_is_added_in_the_settings_as_content() {
+    let db_key = key_of("settings-add-key-file");
+    open_database(&db_key);
+    let content = run_with_bytes("generate_key_file", "", None)
+        .payload
+        .expect("a generated key file");
+
+    let mut settings = call_ok("get_db_settings", json!({ "db_key": db_key }));
+    settings["key_file_used"] = json!(true);
+    settings["key_file_changed"] = json!(true);
+    let written = call(
+        "set_db_settings",
+        json!({
+            "db_key": db_key,
+            "settings": settings,
+            "key_file": key_file_json("added.keyx", &content),
+        }),
+    );
+    assert!(written.starts_with(r#"{"ok":"#), "{}", written);
+
+    let after = call_ok("get_db_settings", json!({ "db_key": db_key }));
+    assert_eq!(after["key_file_name"].as_str(), Some("added.keyx"));
+
+    // The composite key changed: the password alone no longer unlocks, with the key file it does
+    let refused = unlock_with(&db_key, Value::Null);
+    assert!(refused.contains("HeaderHmacHashCheckFailed"), "{}", refused);
+    let unlocked = unlock_with(&db_key, key_file_json("added.keyx", &content));
+    assert!(unlocked.starts_with(r#"{"ok":"#), "{}", unlocked);
+
+    close_database(&db_key);
+}
+
+#[test]
+fn a_key_file_the_settings_do_not_change_is_refused() {
+    let db_key = key_of("settings-unasked-key-file");
+    open_database(&db_key);
+
+    let settings = call_ok("get_db_settings", json!({ "db_key": db_key }));
+    let refused = call(
+        "set_db_settings",
+        json!({
+            "db_key": db_key,
+            "settings": settings,
+            "key_file": key_file_json("k.keyx", b"some key"),
+        }),
+    );
+    assert!(refused.contains(r#""kind":"DataError""#), "{}", refused);
+
+    close_database(&db_key);
+}
