@@ -597,8 +597,8 @@ internal data class DbSettingsDto(
     val kdf: KdfSettingsDto,
     @SerialName("cipher_id") val cipherId: String,
     val password: String? = null,
-    // Still a path, the one place left: the core opens it itself. Unusable with SAF - moving it to content
-    // waits for the settings screen, plan/todo/android/db-credentials-change.md in pass-docs
+    // The name of the key file, to show. Output only: the core never reads it back - a changed key file
+    // goes as content, `key_file` in SetDbSettingsDto
     @SerialName("key_file_name") val keyFileName: String? = null,
     @SerialName("password_used") val passwordUsed: Boolean,
     @SerialName("key_file_used") val keyFileUsed: Boolean,
@@ -633,11 +633,17 @@ internal data class DbMetaDto(
     @SerialName("history_max_size") val historyMaxSize: Long,
 )
 
-/** Arguments of `set_db_settings`. */
+/**
+ * Arguments of `set_db_settings`.
+ *
+ * [keyFile] goes only with `key_file_used` and `key_file_changed` set in [settings] - a new key file, as
+ * content. Anywhere else the core refuses it rather than ignore a key file the caller expects applied.
+ */
 @Serializable
 internal data class SetDbSettingsDto(
     @SerialName("db_key") val dbKey: String,
     val settings: DbSettingsDto,
+    @SerialName("key_file") val keyFile: KeyFileDto? = null,
 )
 
 /**
