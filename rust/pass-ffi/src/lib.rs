@@ -42,6 +42,7 @@ mod history_tests;
 mod init;
 #[cfg(test)]
 mod integrity_tests;
+mod key_file;
 mod key_store;
 #[cfg(test)]
 mod lifecycle_tests;

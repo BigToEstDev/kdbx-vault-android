@@ -5,9 +5,9 @@
 //! how the credentials are changed - `password_changed` / `key_file_changed` next to the new values -
 //! so the ui reads the settings, edits them, and sends them in.
 //!
-//! The key file is the one thing the core still takes by path rather than through the boundary: it
-//! reads and writes it itself. On Android that path has to be inside the app's own storage, never a
-//! SAF uri, so picking a key file means copying it in first.
+//! A new key file comes back as bytes, for the app to write through SAF - the core no longer writes it
+//! itself. One place still takes a key file by path: `key_file_name` inside `DbSettings`. Moving it to
+//! content waits for the settings screen (plan/todo/android/db-credentials-change.md in pass-docs).
 
 use serde::Deserialize;
 
@@ -15,7 +15,7 @@ use kdbx_rust_core::db_service::{self, DbSettings};
 
 use crate::commands::Command;
 use crate::dispatch::Answer;
-use crate::errors::ErrorPayload;
+use crate::errors::{ok_envelope, ErrorPayload};
 use crate::handlers::lifecycle::DbKeyArgs;
 use crate::handlers::{args, json_answer, reject_bytes, Done};
 
@@ -23,12 +23,6 @@ use crate::handlers::{args, json_answer, reject_bytes, Done};
 struct SetSettingsArgs {
     db_key: String,
     settings: DbSettings,
-}
-
-#[derive(Deserialize)]
-struct KeyFileArgs {
-    /// Full path inside the app's own storage - the core writes the file itself
-    key_file_name: String,
 }
 
 /// The settings as they are: the kdf and cipher, which credentials are in use, and the metadata of
@@ -61,18 +55,22 @@ pub(crate) fn set_db_settings(
     Done::answer()
 }
 
-/// Writes a new key file at the given path.
+/// A new key file - 32 random bytes as xml KeyFile 2.0 - handed back as bytes beside the answer.
 ///
-/// An existing file is not overwritten: the core answers `AlreadyExists`, and asking "replace it?" is
-/// the ui's job - this is a file the user may already be using for another database.
+/// Takes no arguments. Writing the file is the app's, through SAF "save as", and so is refusing to
+/// overwrite an existing one: it may be the key of another database, and replacing it locks that
+/// database for good. The core used to guard this when it wrote the file itself (`create_new`); with
+/// bytes the guard moves to the ui.
 pub(crate) fn generate_key_file(
-    args_json: &str,
+    _args_json: &str,
     input: Option<Vec<u8>>,
 ) -> Result<Answer, ErrorPayload> {
     reject_bytes(Command::GenerateKeyFile, input)?;
-    let args: KeyFileArgs = args(args_json)?;
 
-    db_service::generate_key_file(&args.key_file_name).map_err(|e| ErrorPayload::of(&e))?;
+    let content = db_service::generate_key_file_content().map_err(|e| ErrorPayload::of(&e))?;
 
-    Done::answer()
+    Ok(Answer {
+        envelope: ok_envelope(&Done { done: true })?,
+        payload: Some(content),
+    })
 }

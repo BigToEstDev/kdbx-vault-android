@@ -44,18 +44,11 @@ impl ErrorPayload {
 // name first (`NotFound("...")`, `DbKeyNotFound`), so the name is taken from there: everything up to
 // the first delimiter. A variant rename therefore changes `kind` - that is intended, it is the same
 // contract break as renaming a json field, and Step 23 covers it with contract tests.
+//
+// There used to be one exception, `AlreadyExists` out of `Io`, for a key file written over an existing
+// one. Since Step 29 the core hands the key file back as bytes and nothing behind this boundary writes a
+// file, so every io failure is `Io` again.
 fn error_kind(error: &Error) -> String {
-    // One exception to taking the name of the variant: the core wraps every io failure in `Io`, and a
-    // file that is already there is not a failure at all - it is the answer to "write a key file
-    // here", and the ui has a dialog for it. Branching on the message instead is not an option: the
-    // text comes from the operating system and is localised. The rest of io stays `Io`, because there
-    // the ui has nothing to offer but the message
-    if let Error::Io(io) = error {
-        if io.kind() == std::io::ErrorKind::AlreadyExists {
-            return "AlreadyExists".to_string();
-        }
-    }
-
     let debug = format!("{:?}", error);
     let name = debug
         .split(|c: char| !c.is_ascii_alphanumeric() && c != '_')
@@ -116,21 +109,9 @@ mod tests {
         assert!(json.contains(r#""message":"nothing here""#), "{}", json);
     }
 
-    // A file that is already there is an outcome the ui answers with a dialog, so it gets a kind of
-    // its own instead of disappearing into Io
+    // Io stays Io: there the ui has nothing to offer but the message
     #[test]
-    fn a_file_that_already_exists_has_its_own_kind() {
-        let error = Error::Io(std::io::Error::new(
-            std::io::ErrorKind::AlreadyExists,
-            "the file is there",
-        ));
-
-        assert_eq!(error_kind(&error), "AlreadyExists");
-    }
-
-    // The rest of io stays Io: there the ui has nothing to offer but the message
-    #[test]
-    fn other_io_failures_keep_the_name_of_the_variant() {
+    fn io_failures_keep_the_name_of_the_variant() {
         let error = Error::Io(std::io::Error::new(
             std::io::ErrorKind::PermissionDenied,
             "not allowed",

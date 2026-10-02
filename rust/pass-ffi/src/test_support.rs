@@ -43,7 +43,7 @@ pub(crate) fn db_key_args(db_key: &str) -> String {
 
 pub(crate) fn read_args(db_key: &str, password: &str) -> String {
     format!(
-        r#"{{"db_key":"{}","password":"{}","key_file_name":null,"file_name":"lifecycle.kdbx"}}"#,
+        r#"{{"db_key":"{}","password":"{}","file_name":"lifecycle.kdbx"}}"#,
         db_key, password
     )
 }

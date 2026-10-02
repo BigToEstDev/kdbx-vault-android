@@ -1,11 +1,7 @@
 //! Settings and key files across the boundary.
 //!
-//! The key file is the one place these tests touch the disk, because it is the one thing the core
-//! still handles by path: it writes the file itself. A temporary directory stands in for the app's
-//! own storage, which is where the path points on Android.
-
-use std::env;
-use std::fs;
+//! Nothing here touches the disk: since Step 29 a new key file comes back as bytes, for the app to write
+//! through SAF.
 
 use serde_json::{json, Value};
 
@@ -27,14 +23,6 @@ fn call_ok(command: &str, args: Value) -> Value {
     );
 
     ok_payload(&envelope)
-}
-
-/// A path in the temporary directory, standing in for the app's own storage.
-fn temp_path(name: &str) -> String {
-    env::temp_dir()
-        .join(format!("pass-ffi-{}", name))
-        .to_string_lossy()
-        .into_owned()
 }
 
 #[test]
@@ -68,41 +56,57 @@ fn the_settings_of_a_database_are_read_and_written_back() {
 }
 
 #[test]
-fn a_key_file_is_written_and_an_existing_one_is_not_overwritten() {
-    let path = temp_path("generated-key-file");
-    let _ = fs::remove_file(&path);
+fn a_new_key_file_comes_back_as_bytes() {
+    let answer = run_with_bytes("generate_key_file", "", None);
+    assert_shape("generate_key_file", &answer.envelope);
 
-    let envelope = call("generate_key_file", json!({ "key_file_name": path }));
-    assert_shape("generate_key_file", &envelope);
-    assert!(
-        fs::metadata(&path).is_ok(),
-        "the core writes the file itself, by path"
-    );
-
-    // A second call on the same path is refused rather than silently replacing a key file the user
-    // may be using for another database - asking "replace it?" is the ui's job
-    let again = call("generate_key_file", json!({ "key_file_name": path }));
-    assert!(again.starts_with(r#"{"err":"#), "{}", again);
-    assert!(
-        again.contains("AlreadyExists"),
-        "the kind has to say what is wrong: {}",
-        again
-    );
-
-    let _ = fs::remove_file(&path);
+    let content = answer
+        .payload
+        .expect("the key file has to come back as bytes, for the app to write through SAF");
+    let xml = String::from_utf8(content).expect("a generated key file is xml");
+    assert!(xml.contains("<KeyFile>"), "{}", xml);
+    assert!(xml.contains(r#"<Version>2.0</Version>"#), "{}", xml);
 }
 
 #[test]
-fn a_key_file_in_a_directory_that_does_not_exist_is_a_failure_and_not_a_panic() {
-    let path = temp_path("no-such-directory/key-file");
+fn two_new_key_files_are_different() {
+    let first = run_with_bytes("generate_key_file", "", None).payload;
+    let second = run_with_bytes("generate_key_file", "", None).payload;
+    assert_ne!(first, second);
+}
 
-    let envelope = call("generate_key_file", json!({ "key_file_name": path }));
+#[test]
+fn generating_a_key_file_takes_no_bytes() {
+    let refused = run_with_bytes("generate_key_file", "", Some(vec![1, 2, 3])).envelope;
+    assert!(refused.contains("InvalidArguments"), "{}", refused);
+}
 
-    assert!(
-        envelope.starts_with(r#"{"err":"#),
-        "an impossible path has to come back as a refusal: {}",
-        envelope
+#[test]
+fn a_password_over_the_limit_cannot_be_set_in_the_settings() {
+    let db_key = key_of("settings-password-limit");
+    open_database(&db_key);
+
+    let mut settings = call_ok("get_db_settings", json!({ "db_key": db_key }));
+    settings["password"] = json!("a".repeat(257));
+    settings["password_used"] = json!(true);
+    settings["password_changed"] = json!(true);
+    settings["meta"]["database_name"] = json!("Renamed");
+
+    let refused = call(
+        "set_db_settings",
+        json!({"db_key": db_key, "settings": settings}),
     );
+    assert!(
+        refused.contains(r#""kind":"PasswordTooLong""#),
+        "{}",
+        refused
+    );
+
+    // Refused before anything changed
+    let after = call_ok("get_db_settings", json!({ "db_key": db_key }));
+    assert_eq!(after["meta"]["database_name"].as_str(), Some("Test"));
+
+    close_database(&db_key);
 }
 
 #[test]
