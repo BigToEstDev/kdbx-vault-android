@@ -193,7 +193,7 @@ fn a_database_is_locked_and_unlocked_with_the_same_credentials() {
     // A wrong password is refused, and the database stays locked rather than half open
     let refused = run_with_bytes(
         "unlock_kdbx",
-        r#"{"db_key":"content://test/lock-unlock.kdbx","password":"not the password","key_file_name":null}"#,
+        r#"{"db_key":"content://test/lock-unlock.kdbx","password":"not the password"}"#,
         None,
     );
     assert!(
@@ -210,7 +210,7 @@ fn a_database_is_locked_and_unlocked_with_the_same_credentials() {
 
     let unlock = run_with_bytes(
         "unlock_kdbx",
-        r#"{"db_key":"content://test/lock-unlock.kdbx","password":"open sesame","key_file_name":null}"#,
+        r#"{"db_key":"content://test/lock-unlock.kdbx","password":"open sesame"}"#,
         None,
     );
     assert_shape("unlock_kdbx", &unlock.envelope);
@@ -376,4 +376,157 @@ fn a_locked_database_is_unlocked_after_an_authentication_that_already_happened()
     );
 
     run_with_bytes("close_kdbx", &db_key_args(&db_key), None);
+}
+
+// --- Key file as content (Step 29) ---
+//
+// A key file is behind SAF on Android, so it crosses the boundary as content: base64 inside the json
+// arguments, under `key_file`, next to the name to show back.
+
+fn key_file_json(name: &str, content: &[u8]) -> serde_json::Value {
+    serde_json::json!({ "name": name, "content": crate::key_file::encode(content) })
+}
+
+fn new_db_args_with(db_key: &str, key_file: serde_json::Value) -> String {
+    let mut args: serde_json::Value = serde_json::from_str(&new_db_args(db_key)).unwrap();
+    args["key_file"] = key_file;
+    args.to_string()
+}
+
+fn credentials_args(db_key: &str, key_file: serde_json::Value) -> String {
+    serde_json::json!({
+        "db_key": db_key,
+        "password": crate::test_support::TEST_PASSWORD,
+        "key_file": key_file,
+        "file_name": "lifecycle.kdbx",
+    })
+    .to_string()
+}
+
+fn new_key_file() -> Vec<u8> {
+    run_with_bytes("generate_key_file", "", None)
+        .payload
+        .expect("a generated key file")
+}
+
+#[test]
+fn a_database_with_a_key_file_is_created_read_and_unlocked_with_its_content() {
+    prepare();
+    let db_key = key_of("key-file-round-trip");
+    let key_file = new_key_file();
+
+    let created = run_with_bytes(
+        "create_and_write_to_writer",
+        &new_db_args_with(&db_key, key_file_json("new.keyx", &key_file)),
+        None,
+    );
+    assert!(
+        created.envelope.contains(r#""key_file_name":"new.keyx""#),
+        "the name to show comes back: {}",
+        created.envelope
+    );
+    let bytes = created.payload.expect("the new database");
+    run_with_bytes("close_kdbx", &db_key_args(&db_key), None);
+
+    let read = run_with_bytes(
+        "read_kdbx",
+        &credentials_args(&db_key, key_file_json("new.keyx", &key_file)),
+        Some(bytes),
+    );
+    assert!(read.envelope.starts_with(r#"{"ok":"#), "{}", read.envelope);
+
+    run_with_bytes("lock_kdbx", &db_key_args(&db_key), None);
+    let unlocked = run_with_bytes(
+        "unlock_kdbx",
+        &credentials_args(&db_key, key_file_json("new.keyx", &key_file)),
+        None,
+    );
+    assert!(
+        unlocked.envelope.starts_with(r#"{"ok":"#),
+        "{}",
+        unlocked.envelope
+    );
+
+    run_with_bytes("close_kdbx", &db_key_args(&db_key), None);
+}
+
+#[test]
+fn a_database_with_a_key_file_is_not_opened_without_it_or_with_another_one() {
+    prepare();
+    let db_key = key_of("key-file-guard");
+    let key_file = new_key_file();
+    let other = new_key_file();
+
+    let bytes = run_with_bytes(
+        "create_and_write_to_writer",
+        &new_db_args_with(&db_key, key_file_json("new.keyx", &key_file)),
+        None,
+    )
+    .payload
+    .expect("the new database");
+    run_with_bytes("close_kdbx", &db_key_args(&db_key), None);
+
+    for key_file in [serde_json::Value::Null, key_file_json("other.keyx", &other)] {
+        let refused = run_with_bytes(
+            "read_kdbx",
+            &credentials_args(&db_key, key_file),
+            Some(bytes.clone()),
+        );
+        assert!(
+            refused.envelope.contains("HeaderHmacHashCheckFailed"),
+            "{}",
+            refused.envelope
+        );
+    }
+}
+
+#[test]
+fn a_key_file_over_the_limit_is_refused_with_its_own_kind() {
+    prepare();
+    let db_key = key_of("key-file-too-large");
+    let content = vec![0u8; kdbx_rust_core::db_service::KEY_FILE_MAX_SIZE as usize + 1];
+
+    let refused = run_with_bytes(
+        "create_and_write_to_writer",
+        &new_db_args_with(&db_key, key_file_json("video.mp4", &content)),
+        None,
+    );
+
+    assert!(
+        refused.envelope.contains(r#""kind":"KeyFileTooLarge""#),
+        "{}",
+        refused.envelope
+    );
+}
+
+#[test]
+fn a_key_file_path_is_refused_on_creating() {
+    prepare();
+    let db_key = key_of("key-file-path");
+    let mut args: serde_json::Value = serde_json::from_str(&new_db_args(&db_key)).unwrap();
+    args["key_file_name"] = serde_json::json!("/data/user/0/app/files/key.keyx");
+
+    let refused = run_with_bytes("create_and_write_to_writer", &args.to_string(), None);
+
+    assert!(
+        refused.envelope.starts_with(r#"{"err":"#),
+        "a path would mean a key file the database does not have: {}",
+        refused.envelope
+    );
+}
+
+#[test]
+fn a_password_over_the_limit_is_refused_on_creating() {
+    prepare();
+    let db_key = key_of("password-too-long");
+    let mut args: serde_json::Value = serde_json::from_str(&new_db_args(&db_key)).unwrap();
+    args["password"] = serde_json::json!("a".repeat(257));
+
+    let refused = run_with_bytes("create_and_write_to_writer", &args.to_string(), None);
+
+    assert!(
+        refused.envelope.contains(r#""kind":"PasswordTooLong""#),
+        "{}",
+        refused.envelope
+    );
 }

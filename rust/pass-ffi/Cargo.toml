@@ -26,6 +26,10 @@ jni = "0.21"
 ## because this crate wipes its own copies at the boundary - nothing new is pulled in.
 zeroize = "1"
 
+## The content of a key file travels base64 inside the json arguments (see src/key_file.rs). Already in
+## the tree as a dependency of the core, the same version - nothing new is pulled in.
+base64 = "0.22.1"
+
 ## The uuids of groups and entries travel as strings and are parsed by serde before any database is
 ## touched. The same version the core already depends on, so cargo resolves it to one crate and the
 ## types are the ones the core's signatures ask for.

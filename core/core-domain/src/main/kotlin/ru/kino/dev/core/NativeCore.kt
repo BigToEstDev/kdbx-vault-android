@@ -33,14 +33,14 @@ interface NativeCore {
      * @param dbKey uri of the file, the identity of the database
      * @param bytes contents of the file
      * @param fileName name to show; passed in because a SAF uri holds no readable name
-     * @param keyFile path to a key file in the app's own storage, when the database needs one
+     * @param keyFile the key file, when the database needs one - read by the caller, like the database
      */
     suspend fun openDatabase(
         dbKey: String,
         bytes: ByteArray,
         password: String?,
         fileName: String?,
-        keyFile: String? = null,
+        keyFile: KeyFile? = null,
     ): OpenedDatabase
 
     /**
@@ -91,6 +91,14 @@ interface NativeCore {
 
     /** Generates a password with the core's generator. */
     suspend fun generatePassword(options: PasswordOptions = PasswordOptions()): String
+
+    /**
+     * Generates a new key file - 32 random bytes as xml KeyFile 2.0 - and returns its content.
+     *
+     * Writing it is the caller's, through SAF "save as", and so is refusing to write over an existing
+     * file: it may be the key of another database, and replacing it locks that database for good.
+     */
+    suspend fun generateKeyFile(): ByteArray
 }
 
 /**
@@ -107,9 +115,10 @@ data class NewDatabase(
     val fileName: String?,
     val databaseName: String,
     val databaseDescription: String? = null,
+    /** At most [CredentialLimits.PASSWORD_MAX_CHARS] characters - longer is refused by the core */
     val password: String?,
-    /** Path to a key file in the app's own storage, when the database is to have one */
-    val keyFile: String? = null,
+    /** The key file, when the database is to have one */
+    val keyFile: KeyFile? = null,
 )
 
 /** A database the core has just created, and the bytes to write into its file. */
@@ -135,7 +144,8 @@ data class OpenedDatabase(
      * pass-docs, plan/todo/core/rust-core-bugs.md.
      */
     val fileName: String?,
-    val keyFile: String?,
+    /** Name of the key file it was opened with, as it was passed in - to show, never to open */
+    val keyFileName: String?,
 )
 
 /**

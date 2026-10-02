@@ -81,6 +81,9 @@ internal data class GeneratedPasswordDto(val password: String)
  * The only place where the argument shape is the core's own rather than ours: `NewDatabase` keeps its
  * fields private and can only be built through serde, so its json is the contract. Hence
  * `database_file_name` for what everything else calls `db_key`, and the nested kdf object.
+ *
+ * `key_file` is the bridge's, next to the core's fields. The core's own `key_file_name` is a desktop path
+ * and is refused here, so it is not sent at all.
  */
 @Serializable
 internal data class NewDatabaseDto(
@@ -89,9 +92,22 @@ internal data class NewDatabaseDto(
     @SerialName("database_name") val databaseName: String,
     @SerialName("database_description") val databaseDescription: String?,
     val password: String?,
-    @SerialName("key_file_name") val keyFileName: String?,
+    @SerialName("key_file") val keyFile: KeyFileDto?,
     val kdf: KdfDto,
     @SerialName("cipher_id") val cipherId: String,
+)
+
+/**
+ * A key file as it crosses the boundary: the name to show and the whole file, base64 (standard alphabet,
+ * padded).
+ *
+ * Inside the json rather than in the binary slot: `read_kdbx` already carries the database there. The
+ * password travels in the json too, so this is the same level. See `rust/pass-ffi/src/key_file.rs`.
+ */
+@Serializable
+internal data class KeyFileDto(
+    val name: String,
+    val content: String,
 )
 
 /**
@@ -134,7 +150,7 @@ internal data class DbKeyDto(@SerialName("db_key") val dbKey: String)
 internal data class ReadKdbxDto(
     @SerialName("db_key") val dbKey: String,
     val password: String?,
-    @SerialName("key_file_name") val keyFileName: String?,
+    @SerialName("key_file") val keyFile: KeyFileDto?,
     @SerialName("file_name") val fileName: String?,
 )
 
@@ -532,7 +548,7 @@ internal data class AllTagsDto(
 internal data class UnlockDto(
     @SerialName("db_key") val dbKey: String,
     val password: String?,
-    @SerialName("key_file_name") val keyFileName: String?,
+    @SerialName("key_file") val keyFile: KeyFileDto?,
 )
 
 /** Arguments of `rename_db_key`: the file moved, or "save as" wrote it somewhere else. */
@@ -581,6 +597,8 @@ internal data class DbSettingsDto(
     val kdf: KdfSettingsDto,
     @SerialName("cipher_id") val cipherId: String,
     val password: String? = null,
+    // Still a path, the one place left: the core opens it itself. Unusable with SAF - moving it to content
+    // waits for the settings screen, plan/todo/android/db-credentials-change.md in pass-docs
     @SerialName("key_file_name") val keyFileName: String? = null,
     @SerialName("password_used") val passwordUsed: Boolean,
     @SerialName("key_file_used") val keyFileUsed: Boolean,
@@ -620,18 +638,6 @@ internal data class DbMetaDto(
 internal data class SetDbSettingsDto(
     @SerialName("db_key") val dbKey: String,
     val settings: DbSettingsDto,
-)
-
-/**
- * Arguments of `generate_key_file`.
- *
- * A path inside the app's own storage, never a SAF uri: the core reads and writes key files itself.
- * An existing file is not replaced - the answer is the kind `AlreadyExists`, and asking "replace it?"
- * is this side's job.
- */
-@Serializable
-internal data class GenerateKeyFileDto(
-    @SerialName("key_file_name") val keyFileName: String,
 )
 
 /**
