@@ -6,7 +6,9 @@
 
 use crate::contract::assert_shape;
 use crate::dispatch::run_with_bytes;
-use crate::test_support::{db_key_args, key_of, new_db_args, prepare, read_args, KDBX_SIGNATURE};
+use crate::test_support::{
+    db_key_args, key_of, new_db_args, prepare, read_args, KDBX_SIGNATURE, TEST_PASSWORD,
+};
 
 #[test]
 fn a_database_is_created_read_saved_and_closed() {
@@ -96,12 +98,42 @@ fn a_wrong_password_is_a_failure_with_its_own_kind_and_not_a_panic() {
         "{}",
         answer.envelope
     );
+    // Exactly this kind: the app branches on it to tell a typo in the password from a file it will never
+    // open (Step 30). Before, the kind was HeaderHmacHashCheckFailed and the meaning was in the message
     assert!(
-        answer.envelope.contains("HeaderHmacHashCheckFailed"),
+        answer.envelope.contains(r#""kind":"InvalidCredentials""#),
         "the kind has to name what went wrong: {}",
         answer.envelope
     );
     assert!(answer.payload.is_none(), "a refusal carries no payload");
+}
+
+// A file cut short - a sync that did not finish - reaches the app as corrupted wherever it ends (Step 30)
+#[test]
+fn a_truncated_file_is_corrupted_and_not_a_failure_of_the_app() {
+    prepare();
+    let db_key = key_of("truncated");
+
+    let created = run_with_bytes("create_and_write_to_writer", &new_db_args(&db_key), None);
+    let bytes = created.payload.expect("the new database has to come back");
+    run_with_bytes("close_kdbx", &db_key_args(&db_key), None);
+
+    for (cut, kind) in [
+        (100, "HeaderCorrupted"),
+        (bytes.len() - 10, "ContentCorrupted"),
+    ] {
+        let answer = run_with_bytes(
+            "read_kdbx",
+            &read_args(&db_key, TEST_PASSWORD),
+            Some(bytes[..cut].to_vec()),
+        );
+        assert!(
+            answer.envelope.contains(&format!(r#""kind":"{}""#, kind)),
+            "cut at {}: {}",
+            cut,
+            answer.envelope
+        );
+    }
 }
 
 #[test]
@@ -473,7 +505,7 @@ fn a_database_with_a_key_file_is_not_opened_without_it_or_with_another_one() {
             Some(bytes.clone()),
         );
         assert!(
-            refused.envelope.contains("HeaderHmacHashCheckFailed"),
+            refused.envelope.contains("InvalidCredentials"),
             "{}",
             refused.envelope
         );
