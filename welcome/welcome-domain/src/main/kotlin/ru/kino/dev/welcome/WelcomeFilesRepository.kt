@@ -19,8 +19,10 @@ interface WelcomeFilesRepository {
      *
      * The screen asks this before writing and warns: an existing key file may be the key of another
      * database, and writing over it locks that one for good.
+     *
+     * @param file which file this is, for the failure when it cannot be reached
      */
-    suspend fun wouldOverwrite(uri: String): Boolean
+    suspend fun wouldOverwrite(uri: String, file: PickedFile): Boolean
 
     /**
      * Generates a new key file and writes it into [uri], the file "save as" handed back - the key file
