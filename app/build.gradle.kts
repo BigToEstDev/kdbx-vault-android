@@ -35,4 +35,6 @@ dependencies {
     implementation(projects.core.corePres)
     // The native core: its Hilt module binds NativeCore to the jni implementation
     implementation(projects.core.coreData)
+    // Feature data modules: nothing here calls them, but Hilt only sees the bindings of what the app depends on
+    implementation(projects.vault.vaultData)
 }
