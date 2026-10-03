@@ -147,10 +147,18 @@ internal class WelcomeDatabaseRepositoryImpl @Inject constructor(
             this?.wipe()
         }
 
+    // The file name without the extension; a provider that tells no name, or a file called just ".kdbx",
+    // gets the default rather than a database with no name to show
     private fun databaseNameOf(fileName: String?): String =
-        fileName?.let { if (it.endsWith(KDBX, ignoreCase = true)) it.dropLast(KDBX.length) else it }.orEmpty()
+        fileName
+            ?.let { if (it.endsWith(KDBX, ignoreCase = true)) it.dropLast(KDBX.length) else it }
+            ?.takeIf { it.isNotBlank() }
+            ?: DEFAULT_DATABASE_NAME
 
     private companion object {
         const val KDBX = ".kdbx"
+
+        /** Name of a new database whose file has no name to take it from. */
+        const val DEFAULT_DATABASE_NAME = "kdbxvault"
     }
 }
