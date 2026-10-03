@@ -3,7 +3,6 @@ package ru.kino.dev.ffi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import ru.kino.dev.core.CoreException
 import ru.kino.dev.core.CreatedDatabase
 import ru.kino.dev.core.CredentialLimits
 import ru.kino.dev.core.KeyFile
@@ -176,10 +175,7 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
      */
     private fun KeyFile.toDto(): KeyFileDto {
         if (CredentialLimits.isKeyFileTooLarge(content.size.toLong())) {
-            throw CoreException(
-                kind = CredentialLimits.KIND_KEY_FILE_TOO_LARGE,
-                message = "The key file is larger than ${CredentialLimits.KEY_FILE_MAX_SIZE} bytes",
-            )
+            throw CredentialLimits.keyFileTooLarge()
         }
         return KeyFileDto(name = name, content = Base64.getEncoder().encodeToString(content))
     }

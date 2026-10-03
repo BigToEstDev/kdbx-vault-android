@@ -33,7 +33,7 @@ internal class DatabaseRepositoryImpl @Inject constructor(
         databaseName: String,
         password: String,
     ): OpenedDatabase {
-        files.keepAccess(uri)
+        files.keepAccess(uri, forWriting = true)
         val fileName = files.displayName(uri)
 
         val created = core.createDatabase(
@@ -59,7 +59,7 @@ internal class DatabaseRepositoryImpl @Inject constructor(
     }
 
     override suspend fun open(uri: String, password: String): OpenedDatabase {
-        files.keepAccess(uri)
+        files.keepAccess(uri, forWriting = true)
         val fileName = files.displayName(uri)
         val bytes = files.read(uri)
 

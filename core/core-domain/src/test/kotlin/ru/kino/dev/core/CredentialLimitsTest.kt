@@ -6,7 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The limits as the core counts them. Lives in core-data because core-domain has no test setup of its own.
+ * The limits as the core counts them.
  *
  * The values themselves are pinned against the core's: a test here that fails after a change of
  * `credential_limits.rs` is the reminder that the two have to move together.
