@@ -13,9 +13,8 @@ dependencies {
     api(libs.kotlinx.coroutines.core)
     api(libs.kotlinx.coroutines.android)
 
-    // Remembers which database files were opened. Preferences rather than proto: one json string is the
-    // whole schema, and a schema file would be more machinery than the list deserves
-    implementation(libs.androidx.datastore.preferences)
+    // String.toUri for the uris the storage access framework hands around
+    implementation(libs.androidx.core.ktx)
 
     testImplementation(libs.junit)
 }

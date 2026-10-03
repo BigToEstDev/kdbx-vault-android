@@ -29,6 +29,15 @@ object CredentialLimits {
     fun isKeyFileTooLarge(size: Long): Boolean = size > KEY_FILE_MAX_SIZE
 
     /**
+     * The refusal of a key file over [KEY_FILE_MAX_SIZE], as the core reports it - for the places that refuse
+     * before the core does, so a caller still has one failure to handle.
+     */
+    fun keyFileTooLarge(): CoreException = CoreException(
+        kind = KIND_KEY_FILE_TOO_LARGE,
+        message = "The key file is larger than $KEY_FILE_MAX_SIZE bytes",
+    )
+
+    /**
      * Counted in code points, as the core counts characters. Not [String.length]: that is utf-16 units,
      * an emoji is two of them, and the two sides would disagree right at the limit.
      */

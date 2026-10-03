@@ -51,25 +51,19 @@ interface NativeCore {
      */
     suspend fun saveDatabase(dbKey: String): ByteArray
 
+    /**
+     * Unlocks a database that was locked while open: the credentials are checked against the key the core
+     * kept, and the file is not read again - which is why this is quick and opening is not.
+     *
+     * Only for a database the core still holds under [dbKey]. After the process died there is nothing to
+     * unlock, and the database is opened anew with [openDatabase].
+     *
+     * @param keyFile the key file, when the database has one - read by the caller, as for opening
+     */
+    suspend fun unlockDatabase(dbKey: String, password: String?, keyFile: KeyFile? = null): OpenedDatabase
+
     /** Forgets the database: its contents and its key leave the process. */
     suspend fun closeDatabase(dbKey: String)
-
-    /**
-     * Uuid of the root group, the parent every entry ultimately hangs under.
-     *
-     * A narrow question asked of a wide answer: the core hands back the whole tree, and the callers that
-     * need the tree itself get their own method when a screen needs one.
-     */
-    suspend fun rootGroupUuid(dbKey: String): String
-
-    /**
-     * Adds an entry with [title] to the group [parentGroupUuid].
-     *
-     * The form of an entry belongs to the core - which fields a type has, in which sections - so the only
-     * way to make one is to ask for a blank form and hand it back filled. That round trip stays inside
-     * the implementation: nothing above this interface has a reason to know the shape of the form.
-     */
-    suspend fun addEntry(dbKey: String, parentGroupUuid: String, title: String)
 
     /**
      * Compares [bytes] with the checksum taken when the file was last read or written.
