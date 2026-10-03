@@ -21,6 +21,9 @@ class FakeDatabaseFiles(val journal: MutableList<String> = mutableListOf()) : Da
     /** Files that cannot be reached at all - gone, no permission, provider offline. */
     val unreachable = mutableSetOf<String>()
 
+    /** Files that can be read but not written - a provider that went read-only, a full disk. */
+    val unwritable = mutableSetOf<String>()
+
     /** Files the picker granted no access to keep. */
     val notKeepable = mutableSetOf<String>()
 
@@ -37,7 +40,7 @@ class FakeDatabaseFiles(val journal: MutableList<String> = mutableListOf()) : Da
 
     override suspend fun writeReplacing(uri: String, bytes: ByteArray) {
         log("writeReplacing", uri)
-        if (uri in unreachable) throw DatabaseFileException("unreachable: $uri")
+        if (uri in unreachable || uri in unwritable) throw DatabaseFileException("cannot write: $uri")
         contents[uri] = bytes.copyOf()
     }
 

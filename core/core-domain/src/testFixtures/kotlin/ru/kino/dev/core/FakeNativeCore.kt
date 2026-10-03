@@ -5,7 +5,8 @@ package ru.kino.dev.core
  *
  * Every call is written to [journal] as `"<method> <dbKey>"` - share the journal with a [FakeDatabaseFiles]
  * to check the order of calls across both. A failure is set per method in [failures] and thrown each time
- * that method is called, after it is journaled.
+ * that method is called, after it is journaled and its arguments recorded - the way the real core has them
+ * before it refuses.
  */
 class FakeNativeCore(val journal: MutableList<String> = mutableListOf()) : NativeCore {
 
@@ -58,10 +59,10 @@ class FakeNativeCore(val journal: MutableList<String> = mutableListOf()) : Nativ
     override suspend fun buildInfo(): String = "fake"
 
     override suspend fun createDatabase(database: NewDatabase): CreatedDatabase {
-        step("createDatabase", database.dbKey)
         created = database
         passwordReceived = database.password
         database.keyFile?.let { keyFilesReceived += it }
+        step("createDatabase", database.dbKey)
 
         val opened = OpenedDatabase(
             dbKey = database.dbKey,
@@ -80,18 +81,18 @@ class FakeNativeCore(val journal: MutableList<String> = mutableListOf()) : Nativ
         fileName: String?,
         keyFile: KeyFile?,
     ): OpenedDatabase {
-        step("openDatabase", dbKey)
         bytesReceived = bytes.copyOf()
         passwordReceived = password
         keyFile?.let { keyFilesReceived += it }
+        step("openDatabase", dbKey)
 
         return OpenedDatabase(dbKey, databaseName, fileName, keyFile?.name).also { opened[dbKey] = it }
     }
 
     override suspend fun unlockDatabase(dbKey: String, password: String?, keyFile: KeyFile?): OpenedDatabase {
-        step("unlockDatabase", dbKey)
         passwordReceived = password
         keyFile?.let { keyFilesReceived += it }
+        step("unlockDatabase", dbKey)
 
         return opened[dbKey] ?: throw CoreException("DbKeyNotFound", "not open: $dbKey")
     }
