@@ -13,5 +13,8 @@ dependencies {
     api(libs.kotlinx.coroutines.core)
     api(libs.kotlinx.coroutines.android)
 
+    // String.toUri for the uris the storage access framework hands around
+    implementation(libs.androidx.core.ktx)
+
     testImplementation(libs.junit)
 }

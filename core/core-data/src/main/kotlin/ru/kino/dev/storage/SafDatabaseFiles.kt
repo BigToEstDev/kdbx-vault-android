@@ -4,9 +4,9 @@ import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
-import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
+import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -44,7 +44,7 @@ internal class SafDatabaseFiles @Inject constructor(
 
     override suspend fun size(uri: String): Long? = withContext(dispatcher) {
         try {
-            resolver.query(Uri.parse(uri), arrayOf(OpenableColumns.SIZE), null, null, null)
+            resolver.query(uri.toUri(), arrayOf(OpenableColumns.SIZE), null, null, null)
                 ?.use(::readSize)
         } catch (_: SecurityException) {
             // Unknown rather than a failure: the size is a hint, and the read that follows reports a
@@ -57,7 +57,7 @@ internal class SafDatabaseFiles @Inject constructor(
 
     override suspend fun delete(uri: String): Boolean = withContext(dispatcher) {
         try {
-            DocumentsContract.deleteDocument(resolver, Uri.parse(uri))
+            DocumentsContract.deleteDocument(resolver, uri.toUri())
         } catch (_: IOException) {
             false
         } catch (_: SecurityException) {
@@ -76,7 +76,7 @@ internal class SafDatabaseFiles @Inject constructor(
             try {
                 // "wt" means truncate: without it a shorter database leaves the tail of the longer one
                 // behind, and the file stops being a valid kdbx as soon as it grows shorter once
-                resolver.openOutputStream(Uri.parse(uri), "wt")
+                resolver.openOutputStream(uri.toUri(), "wt")
                     ?.use { it.write(bytes) }
                     ?: throw DatabaseFileException("The file could not be opened for writing: $uri")
             } catch (e: IOException) {
@@ -89,7 +89,7 @@ internal class SafDatabaseFiles @Inject constructor(
 
     override suspend fun displayName(uri: String): String? = withContext(dispatcher) {
         try {
-            resolver.query(Uri.parse(uri), arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+            resolver.query(uri.toUri(), arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
                 ?.use(::readDisplayName)
         } catch (_: SecurityException) {
             // A missing name is not worth failing a call over: the screen falls back to the uri
@@ -105,7 +105,7 @@ internal class SafDatabaseFiles @Inject constructor(
                 Intent.FLAG_GRANT_READ_URI_PERMISSION
             }
             try {
-                resolver.takePersistableUriPermission(Uri.parse(uri), flags)
+                resolver.takePersistableUriPermission(uri.toUri(), flags)
             } catch (e: SecurityException) {
                 // The picker did not offer a persistable grant. The file works until the process dies, and
                 // a database remembered on top of that would not open after a restart - so this fails
@@ -117,7 +117,7 @@ internal class SafDatabaseFiles @Inject constructor(
     // Every way a read can fail is the same failure for the caller: the file is not reachable now
     private suspend fun <T> reading(uri: String, block: (InputStream) -> T): T = withContext(dispatcher) {
         try {
-            resolver.openInputStream(Uri.parse(uri))
+            resolver.openInputStream(uri.toUri())
                 ?.use(block)
                 ?: throw DatabaseFileException("The file could not be opened for reading: $uri")
         } catch (e: IOException) {
