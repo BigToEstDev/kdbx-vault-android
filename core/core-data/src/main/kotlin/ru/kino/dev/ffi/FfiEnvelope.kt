@@ -566,7 +566,7 @@ internal data class LockedDto(val locked: Boolean)
  * Result of `is_db_opened`.
  *
  * The one question about a database that cannot fail: one that is not open answers `false` instead of
- * `DbKeyNotFound`, which is the point - it is asked about a uri from the recent list after the process
+ * `DbKeyNotFound`, which is the point - it is asked about a remembered uri after the process
  * was killed, when the core may hold nothing at all.
  */
 @Serializable
