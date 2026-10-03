@@ -89,37 +89,19 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
         }
     }
 
-    override suspend fun rootGroupUuid(dbKey: String): String = withContext(dispatcher) {
+    override suspend fun unlockDatabase(
+        dbKey: String,
+        password: String?,
+        keyFile: KeyFile?,
+    ): OpenedDatabase = withContext(dispatcher) {
         val envelope = PassFfi.invoke(
-            FfiCommands.GROUPS_SUMMARY_DATA,
-            encode(DbKeyDto.serializer(), DbKeyDto(dbKey)),
+            FfiCommands.UNLOCK_DATABASE,
+            encode(
+                UnlockDto.serializer(),
+                UnlockDto(dbKey = dbKey, password = password, keyFile = keyFile?.toDto()),
+            ),
         )
-        FfiEnvelope.unwrap(envelope, GroupTreeDto.serializer()).rootUuid
-    }
-
-    override suspend fun addEntry(dbKey: String, parentGroupUuid: String, title: String) {
-        withContext(dispatcher) {
-            val blank = PassFfi.invoke(
-                FfiCommands.NEW_ENTRY_FORM_DATA_BY_ID,
-                encode(
-                    NewEntryFormDto.serializer(),
-                    NewEntryFormDto(
-                        dbKey = dbKey,
-                        entryTypeUuid = LOGIN_ENTRY_TYPE_UUID,
-                        parentGroupUuid = parentGroupUuid,
-                    ),
-                ),
-            )
-            // The form comes back complete - uuid, times, the fields of the type - and goes back whole.
-            // Only the title is ours to set: everything else is the core's idea of what this type is
-            val form = FfiEnvelope.unwrap(blank, EntryFormDataDto.serializer()).copy(title = title)
-
-            val envelope = PassFfi.invoke(
-                FfiCommands.INSERT_ENTRY_FROM_FORM_DATA,
-                encode(EntryFormArgsDto.serializer(), EntryFormArgsDto(dbKey = dbKey, formData = form)),
-            )
-            FfiEnvelope.unwrap(envelope, DoneDto.serializer())
-        }
+        FfiEnvelope.unwrap(envelope, KdbxLoadedDto.serializer()).toDomain()
     }
 
     override suspend fun verifyFileChecksum(dbKey: String, bytes: ByteArray) {
@@ -247,9 +229,5 @@ internal class NativeCoreFfi @Inject constructor() : NativeCore {
         const val ARGON2_MEMORY_BYTES = 67_108_864L
         const val ARGON2_ITERATIONS = 3L
         const val ARGON2_PARALLELISM = 2
-
-        // The standard "Login" entry type of the core. Its uuid is fixed - the type is built in, not
-        // stored in the database - and it is the type an entry gets when nothing else is chosen
-        const val LOGIN_ENTRY_TYPE_UUID = "ffef5f51-7efc-4373-9eb5-382d5b501768"
     }
 }

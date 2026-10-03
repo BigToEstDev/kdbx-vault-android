@@ -96,4 +96,21 @@ class FfiEnvelopeTest {
         assertTrue(json, json.contains(""""key_file":{"name":"my.keyx","content":"AAEC"}"""))
         assertTrue("no path is sent any more: $json", !json.contains("key_file_name"))
     }
+
+    // `UnlockArgs` in src/handlers/lifecycle.rs: the credentials of opening, without the file
+    @Test
+    fun `unlocking sends the credentials under the names the bridge reads`() {
+        val json = FfiEnvelope.json.encodeToString(
+            UnlockDto.serializer(),
+            UnlockDto(
+                dbKey = "content://db",
+                password = "pw",
+                keyFile = KeyFileDto(name = "my.keyx", content = "AAEC"),
+            ),
+        )
+
+        assertTrue(json, json.contains(""""db_key":"content://db""""))
+        assertTrue(json, json.contains(""""password":"pw""""))
+        assertTrue(json, json.contains(""""key_file":{"name":"my.keyx","content":"AAEC"}"""))
+    }
 }
